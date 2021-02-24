@@ -264,22 +264,23 @@ let createWire (sourcePort: Port) (targetPort: Port) : Wire =
 let init n () =
     let symbols, cmd = Symbol.init()
     let symIds = List.map (fun (sym:Symbol.Symbol) -> sym.Id) symbols
-    let rng = System.Random 0
-    let makeRandomWire() =
+    let rng = Random 0
+    
+    let makeRandomWire () =
         let n = symIds.Length
-        let s1,s2 =
-            match rng.Next(0,n-1), rng.Next(0,n-2) with
-            | r1,r2 when r1 = r2 -> 
-                symbols.[r1],symbols.[n-1] // prevents wire target and source being same
-            | r1,r2 -> 
-                symbols.[r1],symbols.[r2]
-        {
-            Id=CommonTypes.ConnectionId (uuid())
-            SrcSymbol = s1.Id
-            TargetSymbol = s2.Id
-        }
+
+        let s1, s2 =
+            match rng.Next(0, n - 1), rng.Next(0, n - 2) with
+            | r1, r2 when r1 = r2 -> symbols.[r1], symbols.[n - 1]
+            | r1, r2 -> symbols.[r1], symbols.[r2]
+            
+        let source = List.find (fun port -> port.PortType = PortType.Output) s1.Ports
+        let target = List.find (fun port -> port.PortType = PortType.Input) s2.Ports
+        
+        createWire source target
+        
     List.map (fun i -> makeRandomWire()) [1..n]
-    |> (fun wires -> {WX=wires;Symbol=symbols; Color=CommonTypes.Red},Cmd.none)
+    |> (fun wires -> {Wires=wires;Symbols=symbols; Colour=CommonTypes.Red},Cmd.none)
 
 let update (msg : Msg) (model : Model): Model*Cmd<Msg> =
     match msg with
