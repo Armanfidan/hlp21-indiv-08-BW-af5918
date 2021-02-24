@@ -24,7 +24,7 @@ let zoom = 1.0
 
 /// This function zooms an SVG canvas by transforming its content and altering its size.
 /// Currently the zoom expands based on top left corner. Better would be to collect dimensions
-/// current scroll position, and chnage scroll position to keep centre of screen a fixed point.
+/// current scroll position, and change scroll position to keep centre of screen a fixed point.
 let displaySvgWithZoom (zoom:float) (svgReact: ReactElement) (dispatch: Dispatch<Msg>)=
     let sizeInPixels = sprintf "%.2fpx" ((1000. * zoom))
     /// Is the mouse button currently down?
@@ -56,26 +56,7 @@ let displaySvgWithZoom (zoom:float) (svgReact: ReactElement) (dispatch: Dispatch
             [ g // group list of elements with list of attributes
                 [ Style [Transform (sprintf "scale(%f)" zoom)]] // top-level transform style attribute for zoom
                 [ 
-                    text [ // a demo text svg element
-                        X 500; 
-                        Y 50; 
-                        Style [
-                            TextAnchor "middle" // horizontal algnment vs (X,Y)
-                            DominantBaseline "middle" // vertical alignment vs (X,Y)
-                            FontSize "40px"
-                            FontWeight "Bold"
-                            Fill "Green" // font color
-                        ]
-                    ] [str "sample text"]
-
-                    svgReact // the application code
-
-                    polygon [ // a demo svg polygon triangle written on top of the application
-                        SVGAttr.Points "10,10 900,900 10,900"
-                        SVGAttr.StrokeWidth "5px"
-                        SVGAttr.Stroke "Black"
-                        SVGAttr.FillOpacity 0.1
-                        SVGAttr.Fill "Blue"] []
+                    svgReact 
                 ]
             ]
         ]
