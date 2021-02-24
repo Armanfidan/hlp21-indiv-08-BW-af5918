@@ -39,7 +39,7 @@ type Model =
 /// for highlighting, width inference, etc
 type Msg =
     | Symbol of Symbol.Msg
-    | AddWire of ConnectionId * ConnectionId
+    | AddWire of Port * Port
     | SetColor of HighLightColour
     | MouseMsg of MouseT
 
