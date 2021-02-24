@@ -81,13 +81,71 @@ let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
     let xDiff = Math.Abs(x2 - x1)
     let yDiff = Math.Abs(y2 - y1)
 
-type WireRenderProps = {
-    key : CommonTypes.ConnectionId
-    WireP: Wire
-    SrcP: XYPos 
-    TgtP: XYPos
-    ColorP: string
-    StrokeWidthP: string }
+    /// Position of the first corner: If there is enough space then xMid,
+    /// otherwise minimum distance from source port
+    let xCorner1 =
+        if xPositive && (yDiff < ha1 + ha2 || xDiff >= 2. * xMin) then xMid
+        else x1 + xMin
+    /// Position of the first corner: If there is enough space then xMid,
+    /// otherwise minimum distance from target port
+    let xCorner2 =
+        if xPositive && (yDiff < ha1 + ha2 || xDiff >= 2. * xMin) then xMid
+        else x2 - xMin
+
+    /// Vertical line segments
+    let yCorner1 =
+        if yPositive && (yDiff >= ha1 || not xPositive)
+        then y1 + ha1
+        elif yDiff >= ha1 || not xPositive
+        then y1 - ha1
+        elif yPositive
+        then y1 + yDiff
+        else y1 - yDiff
+
+    let yCorner2 =
+        if yPositive && (yDiff >= ha2 || not xPositive)
+        then y2 - ha2
+        elif yDiff >= ha2 || not xPositive
+        then y2 + ha2
+        elif yPositive
+        then y2 - yDiff
+        else y2 + yDiff
+
+    let yMidAdaptive1 =
+        if yDiff >= ha1 + ha2 then yMid else yCorner1
+
+    let yMidAdaptive2 =
+        if yDiff >= ha1 + ha2 then yMid else yCorner2
+    
+    // Corner list    
+    [
+          { X = x1; Y = y1 }
+          { X = xCorner1; Y = y1 }
+          { X = xCorner1; Y = yMidAdaptive1 }
+          { X = xMid; Y = yMidAdaptive1 }
+          { X = xMid; Y = yMidAdaptive2 }
+          { X = xCorner2; Y = yMidAdaptive2 }
+          { X = xCorner2; Y = y2 }
+          { X = x2; Y = y2 }
+    ]    
+
+
+// type WireRenderProps = {
+//     key : ConnectionId
+//     WireP: Wire
+//     SourcePos: XYPos 
+//     TargetPos: XYPos
+//     WireColour: string
+//     WireWidth: string }
+
+type WireRenderProps =
+    { key: ConnectionId
+      SourcePos: XYPos
+      TargetPos: XYPos
+      SourceHeight: float
+      TargetHeight: float
+      WireColour: string
+      WireWidth: string }
 
 /// react virtual DOM SVG for one wire
 /// In general one wire will be multiple (right-angled) segments.
