@@ -195,10 +195,22 @@ let view (model: Model) (dispatch: Msg -> unit) =
 
 //---------------Other interface functions--------------------//
 
-let symbolPos (symModel: Model) (sId: CommonTypes.ComponentId): XYPos =
-    List.find (fun sym -> sym.Id = sId) symModel
-    |> (fun sym -> sym.Pos)
+// let findPort (host: Symbol) (portId: ComponentId) : Port Option =
+//     List.tryFind (fun port -> port.Id = portId) host.Ports
+//     
+// let findSymbolWithPort (symModel: Model) (portId: ComponentId) : Port =
+//     let host = List.find (fun symbol -> findPort symbol portId <> None) symModel
+//     match findPort host portId with
+//     | Some port -> port
+//     | None -> failwithf "Host does not contain port"
 
+let findPort (model: Model) (portId: ComponentId) : Port =
+    model
+    |> List.collect (fun symbol -> symbol.Ports)
+    |> List.filter (fun port -> port.Id = portId)
+    |> List.head
+
+/// Find a symbol such that its ports list contains a port with id=portId
 
 
 /// Update the symbol with matching componentId to comp, or add a new symbol based on comp.
