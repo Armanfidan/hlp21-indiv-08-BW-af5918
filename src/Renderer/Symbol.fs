@@ -66,28 +66,32 @@ let posOf x y = { X = x; Y = y }
 /// The parameters of this function must be enough to specify the symbol completely
 /// in its initial form. This is called by the AddSymbol message and need not be exposed.
 let createNewSymbol (input: XYPos * float) =
-    { Pos = fst input
+    let pos, height = input
+    let hostId = ComponentId(uuid ())
+    { Pos = pos
       LastDragPos = { X = 0.; Y = 0. } // initial value can always be this
       IsDragging = false // initial value can always be this
-      Id = ComponentId(uuid ()) // create a unique id for this symbol
-      Width = snd input
-      Height = snd input
+      Id = hostId // create a unique id for this symbol
+      Width = height
+      Height = height
       Ports =
           [ // Creates one input and one output port. For demo only.
-            { Id = PortId(uuid ())
+            { Id = ComponentId(uuid ())
+              HostId = hostId
               PortType = PortType.Input
               Pos = fst input
               Width = 5
               IsHighlighted = false
-              ParentHeight = snd input }
-            { Id = PortId(uuid ())
+              ParentHeight = height }
+            { Id = ComponentId(uuid ())
+              HostId = hostId
               PortType = PortType.Output
               Pos =
                   { fst input with
-                        X = (fst input).X + snd input }
+                        X = pos.X + height }
               Width = 5
               IsHighlighted = false
-              ParentHeight = snd input } ] }
+              ParentHeight = height } ] }
 
 
 /// Dummy function for test. The real init would probably have no symbols.
