@@ -235,22 +235,32 @@ let singleWireView =
 
 let view (model:Model) (dispatch: Dispatch<Msg>)=
     let wires = 
-        model.WX
-        |> List.map (fun w ->
+        model.Wires
+        |> List.map (fun wire ->
+            let source = findPort model.Symbols wire.SourcePort
+            let target = findPort model.Symbols wire.TargetPort
             let props = {
-                key = w.Id
-                WireP = w
-                SrcP = Symbol.symbolPos model.Symbol w.SrcSymbol 
-                TgtP = Symbol. symbolPos model.Symbol w.TargetSymbol 
-                ColorP = model.Color.Text()
-                StrokeWidthP = "2px" }
+                key = wire.Id
+                SourcePos = source.Pos
+                TargetPos = target.Pos
+                SourceHeight = source.ParentHeight
+                TargetHeight = target.ParentHeight
+                WireColour = model.Colour.Text()
+                WireWidth = "2px" }
             singleWireView props)
-    let symbols = Symbol.view model.Symbol (fun sMsg -> dispatch (Symbol sMsg))
+    let symbols = Symbol.view model.Symbols (fun sMsg -> dispatch (Symbol sMsg))
     g [] [(g [] wires); symbols]
+    
+    
+let createWire (sourcePort: Port) (targetPort: Port) : Wire =
+    { Id = ConnectionId(uuid ())
+      SourcePort = sourcePort.Id
+      TargetPort = targetPort.Id
+      IsError = sourcePort.Width <> targetPort.Width
+      Width = if sourcePort.Width = targetPort.Width then int sourcePort.Width else 3 // If there is an error then the width is 2, to make a thick red wire.
+      BoundingBoxes = []
+      Corners = findCorners sourcePort.Pos targetPort.Pos sourcePort.ParentHeight targetPort.ParentHeight}
 
-/// dummy init for testing: real init would probably start with no wires.
-/// this initialisation is not realistic - ports are not used
-/// this initialisation depends on details of Symbol.Model type.
 let init n () =
     let symbols, cmd = Symbol.init()
     let symIds = List.map (fun (sym:Symbol.Symbol) -> sym.Id) symbols
