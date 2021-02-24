@@ -285,10 +285,10 @@ let init n () =
 let update (msg : Msg) (model : Model): Model*Cmd<Msg> =
     match msg with
     | Symbol sMsg -> 
-        let sm,sCmd = Symbol.update sMsg model.Symbol
-        {model with Symbol=sm}, Cmd.map Symbol sCmd
-    | AddWire _ -> failwithf "Not implemented"
-    | SetColor c -> {model with Color = c}, Cmd.none
+        let sm,sCmd = Symbol.update sMsg model.Symbols
+        {model with Symbols=sm}, Cmd.map Symbol sCmd
+    | AddWire (source, target) -> { model with Wires = (createWire source target) :: model.Wires }, Cmd.none
+    | SetColor c -> {model with Colour = c}, Cmd.none
     | MouseMsg mMsg -> model, Cmd.ofMsg (Symbol (Symbol.MouseMsg mMsg))
 
 //---------------Other interface functions--------------------//
