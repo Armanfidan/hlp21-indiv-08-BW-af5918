@@ -1,5 +1,8 @@
 ﻿module BusWire
 
+open System
+open Symbol
+open CommonTypes
 open Fable.React
 open Fable.React.Props
 open Browser
@@ -12,26 +15,21 @@ open Helpers
 //------------------------------BusWire Types-----------------------------//
 //------------------------------------------------------------------------//
 
+type BoundingBox = { P1: XYPos; P2: XYPos }
 
-/// type for buswires
-/// for demo only. The real wires will
-/// connect to Ports - not symbols, where each symbol has
-/// a number of ports (see Issie Component and Port types) and have
-/// extra information for highlighting, width, etc.
-/// NB - how you define Ports for drawing - whether they correspond to
-/// a separate datatype and Id, or whether port offsets from
-/// component coordinates are held in some other way, is up to groups.
-type Wire = {
-    Id: CommonTypes.ConnectionId 
-    SrcSymbol: CommonTypes.ComponentId
-    TargetSymbol: CommonTypes.ComponentId
-    }
+type Wire =
+    { Id: ConnectionId
+      SourcePort: ComponentId
+      TargetPort: ComponentId
+      IsError: bool
+      Width: int
+      BoundingBoxes: BoundingBox list
+      Corners: XYPos list }
 
-type Model = {
-    Symbol: Symbol.Model
-    WX: Wire list
-    Color: CommonTypes.HighLightColor
-    }
+type Model =
+    { Symbols: Symbol.Model
+      Wires: Wire list
+      Colour: HighLightColour }
 
 //----------------------------Message Type-----------------------------------//
 
