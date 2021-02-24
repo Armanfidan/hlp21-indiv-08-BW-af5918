@@ -41,8 +41,8 @@ let displaySvgWithZoom (zoom:float) (svgReact: ReactElement) (dispatch: Dispatch
                 CSSProp.OverflowX OverflowOptions.Auto 
                 CSSProp.OverflowY OverflowOptions.Auto
             ] 
-          OnMouseDown (fun ev -> (mouseOp Down ev))
-          OnMouseUp (fun ev -> (mouseOp Up ev))
+          OnMouseDown (mouseOp Down)
+          OnMouseUp (mouseOp Up)
           OnMouseMove (fun ev -> mouseOp (if mDown ev then Drag else Move) ev)
         ]
         [ svg
