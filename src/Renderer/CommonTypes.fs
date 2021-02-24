@@ -11,11 +11,14 @@ module CommonTypes
 
     // Specify the position and type of a port in a JSComponent.
     type PortType = Input | Output
+    
+    /// SHA hash unique to a component - common between JS and F#
     [<Erase>]
-    type PortId = | PortId of string
+    type ComponentId      = | ComponentId of string
 
     type Port = {
-        Id : PortId
+        Id : ComponentId
+        HostId: ComponentId
         PortType : PortType
         Pos: XYPos
         Width: int
@@ -101,7 +104,7 @@ module CommonTypes
     /// lots of colors can be added, see https://www.w3schools.com/colors/colors_names.asp
     /// The Text() method converts it to the correct HTML string
     /// Where speed matters the color must be added as a case in the match statement
-    type HighLightColor = Red | Blue | Yellow | Green | Orange | Grey
+    type HighLightColour = Red | Blue | Yellow | Green | Orange | Grey
     with 
         member this.Text() = // the match statement is used for performance
             match this with
@@ -117,10 +120,7 @@ module CommonTypes
     // The next types are not strictly necessary, but help in understanding what is what.
     // Used consistently they provide type protection that greatly reduces coding errors
 
-    /// SHA hash unique to a component - common between JS and F#
     
-    [<Erase>]
-    type ComponentId      = | ComponentId of string
     /// SHA hash unique to a connection - common between JS and F#
 
     [<Erase>]
