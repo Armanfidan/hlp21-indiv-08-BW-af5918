@@ -5,7 +5,6 @@ open Symbol
 open CommonTypes
 open Fable.React
 open Fable.React.Props
-open Browser
 open Elmish
 open Elmish.React
 open Helpers
@@ -40,16 +39,47 @@ type Model =
 /// for highlighting, width inference, etc
 type Msg =
     | Symbol of Symbol.Msg
-    | AddWire of (CommonTypes.ConnectionId * CommonTypes.ConnectionId)
-    | SetColor of CommonTypes.HighLightColor
+    | AddWire of ConnectionId * ConnectionId
+    | SetColor of HighLightColour
     | MouseMsg of MouseT
-
-
-
 
 /// look up wire in WireModel
 let wire (wModel: Model) (wId: CommonTypes.ConnectionId): Wire =
-    failwithf "Not impelmented"
+     wModel.Wires
+     |> List.filter (fun wire -> wire.Id = wId)
+     |> List.head
+
+
+let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
+    // Midpoints
+    let xMid = (targetPort.X + sourcePort.X) / 2.0
+
+    let yMid = (targetPort.Y + sourcePort.Y) / 2.0
+
+    // Source coordinates
+    let x1 = sourcePort.X
+    let y1 = sourcePort.Y
+
+    // Target coordinates
+    let x2 = targetPort.X
+    let y2 = targetPort.Y
+
+    // Heights of parent symbols of the source and target ports, adjusted manually
+    let ha1 = h1 / 2. + 20.
+
+    let ha2 = h1 / 2. + 20.
+
+    // Minimum distance to go straight from ports
+    let xMin = 20.
+
+    // If source is on the left of target
+    let xPositive = x2 > x1
+    // If source is below target
+    let yPositive = y2 > y1
+
+    // Distances between ports
+    let xDiff = Math.Abs(x2 - x1)
+    let yDiff = Math.Abs(y2 - y1)
 
 type WireRenderProps = {
     key : CommonTypes.ConnectionId
