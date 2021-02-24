@@ -144,50 +144,92 @@ let update (msg: Msg) (model: Model): Model * Cmd<'a> =
 
 /// Input to react component (which does not re-evaluate when inputs stay the same)
 /// This generates View (react virtual DOM SVG elements) for one symbol
-type private RenderCircleProps =
-    { Circle: Symbol // name works for the demo!
+type private RenderComponentProps =
+    { Component: Symbol // name works for the demo!
       Dispatch: Dispatch<Msg>
       key: string } // special field used by react to detect whether lists have changed, set to symbol Id
 
 /// View for one symbol with caching for efficient execution when input does not change
-let private renderCircle =
+let private renderComponent =
     FunctionComponent.Of
-        ((fun (props: RenderCircleProps) ->
+        ((fun (props: RenderComponentProps) ->
+            let inputPorts = List.filter (fun port -> port.PortType = PortType.Input) props.Component.Ports
+            let outputPorts = List.filter (fun port -> port.PortType = PortType.Output) props.Component.Ports
+            
+            // Dummy component has one input and one output
+            let inputPort = inputPorts.Head
+            let outputPort = outputPorts.Head
+            
             let handleMouseMove =
                 Hooks.useRef (fun (ev: Types.Event) ->
                     let ev = ev :?> Types.MouseEvent
                     // x,y coordinates here do not compensate for transform in Sheet
                     // and are wrong unless zoom=1.0 MouseMsg coordinates are correctly compensated.
-                    Dragging(props.Circle.Id, posOf ev.pageX ev.pageY)
+                    Dragging(props.Component.Id, posOf ev.pageX ev.pageY)
                     |> props.Dispatch)
 
-            let color =
-                if props.Circle.IsDragging then "lightblue" else "grey"
+            let colour =
+                if props.Component.IsDragging then "lightblue" else "grey"
 
-            circle [ OnMouseUp(fun ev ->
-                         document.removeEventListener ("mousemove", handleMouseMove.current)
-                         EndDragging props.Circle.Id |> props.Dispatch)
-                     OnMouseDown(fun ev ->
-                         // See note above re coords wrong if zoom <> 1.0
-                         StartDragging(props.Circle.Id, posOf ev.pageX ev.pageY)
-                         |> props.Dispatch
+            g [] [
+                polygon [ OnMouseUp(fun _ ->
+                              document.removeEventListener ("mousemove", handleMouseMove.current)
+                              EndDragging props.Component.Id |> props.Dispatch)
+                          OnMouseDown(fun ev ->
+                              StartDragging(props.Component.Id, posOf ev.pageX ev.pageY)
+                              |> props.Dispatch
 
-                         document.addEventListener ("mousemove", handleMouseMove.current))
-                     Cx props.Circle.Pos.X
-                     Cy props.Circle.Pos.Y
-                     R 20.
-                     SVGAttr.Fill color
-                     SVGAttr.Stroke color
-                     SVGAttr.StrokeWidth 1 ] []),
-         "Circle",
+                              document.addEventListener ("mousemove", handleMouseMove.current))
+
+                          SVGAttr.Points
+                              (sprintf
+                                  "%0.2f,%0.2f %0.2f,%0.2f %0.2f,%0.2f %0.2f,%0.2f"
+                                   (props.Component.Pos.X) (props.Component.Pos.Y - (props.Component.Height / 2.))
+                                   (props.Component.Pos.X + props.Component.Height) (props.Component.Pos.Y - (props.Component.Height / 2.))
+                                   (props.Component.Pos.X + props.Component.Height) (props.Component.Pos.Y + (props.Component.Height / 2.))
+                                   (props.Component.Pos.X) (props.Component.Pos.Y + (props.Component.Height / 2.)))
+                          SVGAttr.Fill colour
+                          SVGAttr.Stroke colour
+                          SVGAttr.StrokeWidth 1 ] []
+                
+                circle [ OnMouseUp(fun _ ->
+                             document.removeEventListener ("mousemove", handleMouseMove.current)
+                             EndDragging inputPort.Id |> props.Dispatch)
+                         OnMouseDown(fun ev ->
+                             StartDragging(inputPort.Id, posOf ev.pageX ev.pageY)
+                             |> props.Dispatch
+
+                             document.addEventListener ("mousemove", handleMouseMove.current))
+                         Cx inputPort.Pos.X
+                         Cy inputPort.Pos.Y
+                         R inputPort.Width
+                         SVGAttr.Fill "darkgrey"
+                         SVGAttr.Stroke "grey"
+                         SVGAttr.StrokeWidth 1 ] []
+                circle [ OnMouseUp(fun _ ->
+                             document.removeEventListener ("mousemove", handleMouseMove.current)
+                             EndDragging outputPort.Id |> props.Dispatch)
+                         OnMouseDown(fun ev ->
+                             StartDragging(outputPort.Id, posOf ev.pageX ev.pageY)
+                             |> props.Dispatch
+
+                             document.addEventListener ("mousemove", handleMouseMove.current))
+                         Cx outputPort.Pos.X
+                         Cy outputPort.Pos.Y
+                         R outputPort.Width
+                         SVGAttr.Fill "darkgrey"
+                         SVGAttr.Stroke "grey"
+                         SVGAttr.StrokeWidth 1 ] []
+            ]),
+         "Component",
          equalsButFunctions)
 
 /// View function for symbol layer of SVG
 let view (model: Model) (dispatch: Msg -> unit) =
     model
     |> List.map (fun ({ Id = CommonTypes.ComponentId id } as circle) ->
-        renderCircle
-            { Circle = circle
+        renderComponent
+            { Component = circle
               Dispatch = dispatch
               key = id })
     |> ofList
@@ -212,7 +254,7 @@ let findPort (model: Model) (portId: ComponentId) : Port =
 
 /// Find a symbol such that its ports list contains a port with id=portId
 
-
+    
 /// Update the symbol with matching componentId to comp, or add a new symbol based on comp.
 let updateSymbolModelWithComponent (symModel: Model) (comp: CommonTypes.Component) = failwithf "Not Implemented"
 
