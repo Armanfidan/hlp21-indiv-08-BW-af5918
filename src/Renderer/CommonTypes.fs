@@ -1,5 +1,6 @@
 module CommonTypes
     open Fable.Core
+    open Helpers
 
     let draw2dCanvasWidth = 3000
     let draw2dCanvasHeight = 2000
@@ -10,23 +11,16 @@ module CommonTypes
 
     // Specify the position and type of a port in a JSComponent.
     type PortType = Input | Output
+    [<Erase>]
+    type PortId = | PortId of string
 
-    /// A component I/O.
-    /// Id (like any other Id) is a string generated with 32 random hex charactes,
-    /// so it is (practically) globally unique. These Ids are used by the draw2d
-    /// library to uniquely refer to ports and components. They are generated via:
-    /// http://www.draw2d.org/draw2d_touch/jsdoc_6/#!/api/draw2d.util.UUID.
-    /// PortNumber is used to identify which port on a component, contiguous from 0
-    /// separately for inputs and outputs.
-    /// HostId is the unique Id of the component where the port is. For example,
-    /// all three ports on the same And component will have the same HostId.
     type Port = {
-        Id : string
-        // For example, an And would have input ports 0 and 1, and output port 0.
-        // If the port is used in a Connection record as Source or Target, the Number is None. 
-        PortNumber : int option
+        Id : PortId
         PortType : PortType
-        HostId : string
+        Pos: XYPos
+        Width: int
+        IsHighlighted: bool
+        ParentHeight: float
     }
 
     /// Name identified the LoadedComponent used.
@@ -124,7 +118,7 @@ module CommonTypes
     // Used consistently they provide type protection that greatly reduces coding errors
 
     /// SHA hash unique to a component - common between JS and F#
-
+    
     [<Erase>]
     type ComponentId      = | ComponentId of string
     /// SHA hash unique to a connection - common between JS and F#
