@@ -379,6 +379,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                   |> List.map (fun wire ->
                       let source = findPort model.Symbols wire.SourcePort
                       let target = findPort model.Symbols wire.TargetPort
+
                       if wireId <> wire.Id then
                           wire
                       else
@@ -415,6 +416,8 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                           let diff = posDiff pagePos wire.LastDragPos
 
                           { wire with
+                                /// Change this to find the two corners that the mouse was between, then move
+                                /// those corners only.
                                 Corners = List.map (fun corner -> posAdd corner diff) wire.Corners
                                 LastDragPos = pagePos }) },
         Cmd.none
