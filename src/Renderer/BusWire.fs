@@ -144,12 +144,12 @@ let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
 
 type WireRenderProps =
     { key: ConnectionId
-      SourcePos: XYPos
-      TargetPos: XYPos
-      SourceHeight: float
-      TargetHeight: float
+      Wire: Wire
+      Source: Port
+      Target: Port
       WireColour: string
-      WireWidth: int }
+      WireWidth: int
+      Dispatch: Dispatch<Msg> }
 
 /// react virtual DOM SVG for one wire
 /// In general one wire will be multiple (right-angled) segments.
