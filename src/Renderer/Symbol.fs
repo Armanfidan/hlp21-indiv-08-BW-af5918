@@ -245,7 +245,7 @@ let view (model: Model) (dispatch: Msg -> unit) =
 //     | Some port -> port
 //     | None -> failwithf "Host does not contain port"
 
-let findPort (model: Model) (portId: ComponentId) : Port =
+let findPort (model: Model) (portId: ComponentId): Port =
     model
     |> List.collect (fun symbol -> symbol.Ports)
     |> List.filter (fun port -> port.Id = portId)
@@ -253,7 +253,7 @@ let findPort (model: Model) (portId: ComponentId) : Port =
 
 /// Find a symbol such that its ports list contains a port with id=portId
 
-    
+
 /// Update the symbol with matching componentId to comp, or add a new symbol based on comp.
 let updateSymbolModelWithComponent (symModel: Model) (comp: CommonTypes.Component) = failwithf "Not Implemented"
 
