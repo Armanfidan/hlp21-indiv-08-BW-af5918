@@ -17,6 +17,7 @@ open Helpers
 
 type BoundingBox = { P1: XYPos; P2: XYPos }
 
+// Add bounding boxes to each segment of the wire.
 type Wire =
     { Id: ConnectionId
       SourcePort: ComponentId
@@ -162,9 +163,9 @@ let singleWireView model =
             if props.Source.IsDragging || props.Target.IsDragging
             then findCorners props.Source.Pos props.Target.Pos props.Source.ParentHeight props.Target.ParentHeight
             else props.Wire.Corners
-
-        printf "Render: %A" props.Wire.Corners
-        printf "Render corners: %A" corners
+        //
+        // printf "Render: %A" props.Wire.Corners
+        // printf "Render corners: %A" corners
 
         let handleMouseMove =
             Hooks.useRef (fun (ev: Types.Event) ->
@@ -275,7 +276,8 @@ let view (model: Model) (dispatch: Msg -> unit) =
         model.Wires
         |> List.map (fun wire ->
             // So this wire's corners are changing
-            printf "View: %A" wire.Corners
+            printf "Corners: %A" wire.Corners
+            printf "Boxes: %A" wire.BoundingBoxes
 
             let source = findPort model.Symbols wire.SourcePort
             let target = findPort model.Symbols wire.TargetPort
@@ -300,16 +302,33 @@ let view (model: Model) (dispatch: Msg -> unit) =
 
     g [] [ (g [] wires); symbols ]
 
+let createBoundingBoxes (corners: XYPos list): BoundingBox list =
+    let diff = { X = 5.; Y = 5. }
+    let doubleDiff = { X = 10.; Y = 10. }
+    let (firstCorner :: secondCorner :: rest) = corners
+
+    rest
+    |> List.fold (fun boxes currentCorner ->
+        (let previousBox = List.head boxes
+
+         { P1 = posDiff previousBox.P2 doubleDiff
+           P2 = posAdd currentCorner diff }
+         :: boxes
+
+        ))
+           [ { P1 = posDiff firstCorner diff
+               P2 = posAdd secondCorner diff } ]
 
 let createWire (sourcePort: Port) (targetPort: Port): Wire =
+    let corners = findCorners sourcePort.Pos targetPort.Pos sourcePort.ParentHeight targetPort.ParentHeight
     { Id = ConnectionId(uuid ())
       SourcePort = sourcePort.Id
       TargetPort = targetPort.Id
       IsError = sourcePort.Width <> targetPort.Width
       Width = if sourcePort.Width = targetPort.Width then int sourcePort.Width else 3 // If there is an error then the width is 2, to make a thick red wire.
       IsDragging = false
-      BoundingBoxes = []
-      Corners = findCorners sourcePort.Pos targetPort.Pos sourcePort.ParentHeight targetPort.ParentHeight
+      BoundingBoxes = createBoundingBoxes corners
+      Corners = corners
       LastDragPos = { X = 0.; Y = 0. } }
 
 let init n () =
