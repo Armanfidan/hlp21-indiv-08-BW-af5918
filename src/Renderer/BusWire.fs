@@ -196,62 +196,6 @@ let singleWireView model =
                                (sprintf "%d"
                                 <| if props.WireWidth = 0 then 3 else props.WireWidth))
                        SVGAttr.FillOpacity "0" ] []
-            // // Source to first corner
-            // line [ X1 corners.[0].X
-            //        Y1 corners.[0].Y
-            //        X2 corners.[1].X
-            //        Y2 corners.[1].Y
-            //        SVGAttr.Stroke props.WireColour
-            //        SVGAttr.StrokeWidth props.WireWidth ] []
-            // // props.Wire.BoundingBoxes = props.Wire.BoundingBoxes @ { P1 = { X = x1 - 5.; Y = y1 - 5. }; P2 = { X = xCorner1 + 5.; Y = y1 + 5. } }
-            // // Last corner to target
-            // line [ X1 corners.[6].X
-            //        Y1 corners.[6].Y
-            //        X2 corners.[7].X
-            //        Y2 corners.[7].Y
-            //        SVGAttr.Stroke props.WireColour
-            //        SVGAttr.StrokeWidth props.WireWidth ] []
-            //
-            //
-            // // --------------------Vertical lines------------------------
-            // // Left, connecting source extension to first horizontal line
-            // line [ X1 corners.[1].X
-            //        Y1 corners.[1].Y
-            //        X2 corners.[2].X
-            //        Y2 corners.[2].Y
-            //        SVGAttr.Stroke props.WireColour
-            //        SVGAttr.StrokeWidth props.WireWidth ] []
-            // // Middle vertical line, connecting the two horizontal lines
-            // line [ X1 corners.[3].X
-            //        Y1 corners.[3].Y
-            //        X2 corners.[4].X
-            //        Y2 corners.[4].Y
-            //        SVGAttr.Stroke props.WireColour
-            //        SVGAttr.StrokeWidth props.WireWidth ] []
-            // // Right, connecting second horizontal line to target extension
-            // line [ X1 corners.[5].X
-            //        Y1 corners.[5].Y
-            //        X2 corners.[6].X
-            //        Y2 corners.[6].Y
-            //        SVGAttr.Stroke props.WireColour
-            //        SVGAttr.StrokeWidth props.WireWidth ] []
-            //
-            // // -------------------Horizontal connectors---------------------
-            // // First mid horizontal line
-            // line [ X1 corners.[2].X
-            //        Y1 corners.[2].Y
-            //        X2 corners.[3].X
-            //        Y2 corners.[3].Y
-            //        SVGAttr.Stroke props.WireColour
-            //        SVGAttr.StrokeWidth props.WireWidth ] []
-            // // Second mid horizontal line
-            // line [ X1 corners.[4].X
-            //        Y1 corners.[4].Y
-            //        X2 corners.[5].X
-            //        Y2 corners.[5].Y
-            //        SVGAttr.Stroke props.WireColour
-            //        SVGAttr.StrokeWidth props.WireWidth ] []
-            //
             if props.WireWidth > 1 then
                 text [ SVGAttr.X(corners.[0].X + 6.)
                        SVGAttr.Y(corners.[0].Y - 6.)
