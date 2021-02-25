@@ -145,7 +145,7 @@ type WireRenderProps =
       SourceHeight: float
       TargetHeight: float
       WireColour: string
-      WireWidth: string }
+      WireWidth: int }
 
 /// react virtual DOM SVG for one wire
 /// In general one wire will be multiple (right-angled) segments.
@@ -166,7 +166,7 @@ let singleWireView =
                                             corners.[4].X corners.[4].Y corners.[5].X corners.[5].Y
                                             corners.[6].X corners.[6].Y corners.[7].X corners.[7].Y)
                     SVGAttr.Stroke props.WireColour
-                    SVGAttr.StrokeWidth props.WireWidth
+                    SVGAttr.StrokeWidth (str (sprintf "%d" <| if props.WireWidth = 0 then 3 else props.WireWidth))
                     SVGAttr.FillOpacity "0"
                 ][]
                 // // Source to first corner
@@ -225,10 +225,19 @@ let singleWireView =
                 //        SVGAttr.Stroke props.WireColour
                 //        SVGAttr.StrokeWidth props.WireWidth ] []
                 //
-                if props.WireWidth = "3" then
-                    text [ SVGAttr.X (corners.[0].X + 5.)
-                           SVGAttr.Y (corners.[0].Y - 5.) ] [
-                        str <| sprintf "%A" props.WireWidth
+                if props.WireWidth > 1 then
+                    text [ SVGAttr.X (corners.[0].X + 6.)
+                           SVGAttr.Y (corners.[0].Y - 6.)
+                           SVGAttr.Stroke props.WireColour
+                           SVGAttr.Fill props.WireColour ] [
+                        str <| sprintf "%d" props.WireWidth
+                    ]
+                elif props.WireWidth = 0 then
+                    text [ SVGAttr.X (corners.[0].X + 6.)
+                           SVGAttr.Y (corners.[0].Y - 6.)
+                           SVGAttr.Stroke props.WireColour
+                           SVGAttr.Fill props.WireColour ] [
+                        str "Error: widths do not match"
                     ]
         ])
 
@@ -239,14 +248,18 @@ let view (model:Model) (dispatch: Dispatch<Msg>)=
         |> List.map (fun wire ->
             let source = findPort model.Symbols wire.SourcePort
             let target = findPort model.Symbols wire.TargetPort
+            
+            let width = if source.Width = target.Width then source.Width
+                        else 0
+            
             let props = {
                 key = wire.Id
                 SourcePos = source.Pos
                 TargetPos = target.Pos
                 SourceHeight = source.ParentHeight
                 TargetHeight = target.ParentHeight
-                WireColour = model.Colour.Text()
-                WireWidth = "2px" }
+                WireColour = if not wire.IsError then model.Colour.Text() else Red.Text()
+                WireWidth = width }
             singleWireView props)
     let symbols = Symbol.view model.Symbols (fun sMsg -> dispatch (Symbol sMsg))
     g [] [(g [] wires); symbols]
@@ -300,14 +313,14 @@ let wireToSelectOpt (wModel: Model) (pos: XYPos) : CommonTypes.ConnectionId opti
     failwith "Not implemented"
 
 //----------------------interface to Issie-----------------------//
-let extractWire (wModel: Model) (sId:CommonTypes.ComponentId) : CommonTypes.Component= 
+let extractWire (wModel: Model) (sId: ComponentId) : Component= 
     failwithf "Not implemented"
 
-let extractWires (wModel: Model) : CommonTypes.Component list = 
+let extractWires (wModel: Model) : Component list = 
     failwithf "Not implemented"
 
 /// Update the symbol with matching componentId to comp, or add a new symbol based on comp.
-let updateSymbolModelWithComponent (symModel: Model) (comp:CommonTypes.Component) =
+let updateSymbolModelWithComponent (symModel: Model) (comp: Component) =
     failwithf "Not Implemented"
 
 
