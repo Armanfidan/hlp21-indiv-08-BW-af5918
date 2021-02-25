@@ -343,37 +343,79 @@ let init n () =
           Colour = Red },
         Cmd.none)
 
-let update (msg : Msg) (model : Model): Model*Cmd<Msg> =
+let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
     match msg with
-    | Symbol sMsg -> 
-        let sm,sCmd = Symbol.update sMsg model.Symbols
-        {model with Symbols=sm}, Cmd.map Symbol sCmd
-    | AddWire (source, target) -> { model with Wires = (createWire source target) :: model.Wires }, Cmd.none
-    | SetColor c -> {model with Colour = c}, Cmd.none
-    | MouseMsg mMsg -> model, Cmd.ofMsg (Symbol (Symbol.MouseMsg mMsg))
+    | Symbol sMsg ->
+        let sm, sCmd = Symbol.update sMsg model.Symbols
+        { model with Symbols = sm }, Cmd.map Symbol sCmd
+    | AddWire (source, target) ->
+        { model with
+              Wires = (createWire source target) :: model.Wires },
+        Cmd.none
+    | SetColor c -> { model with Colour = c }, Cmd.none
+    | StartDraggingWire (wireId, pagePos) ->
+        { model with
+              Wires =
+                  model.Wires
+                  |> List.map (fun wire ->
+                      if wireId <> wire.Id then
+                          wire
+                      else
+                          { wire with
+                                LastDragPos = pagePos
+                                IsDragging = true })
+              Symbols =
+                  model.Symbols
+                  |> List.map (fun symbol ->
+                      let wire =
+                          model.Wires
+                          |> List.filter (fun wire -> wireId = wire.Id)
+                          |> List.head
+
+                      let sp = findPort model.Symbols wire.SourcePort
+                      let tp = findPort model.Symbols wire.TargetPort
+
+                      if (symbol.Id <> sp.HostId && symbol.Id <> tp.HostId) then
+                          symbol
+                      else
+                          { symbol with
+                                Ports = List.map (fun port -> { port with IsDragging = false }) symbol.Ports }) },
+        Cmd.none
+
+    | DraggingWire (wireId, pagePos) ->
+        { model with
+              Wires =
+                  model.Wires
+                  |> List.map (fun wire ->
+                      if wireId <> wire.Id then
+                          wire
+                      else
+                          let diff = posDiff pagePos wire.LastDragPos
+
+                          { wire with
+                                Corners = List.map (fun corner -> posAdd corner diff) wire.Corners
+                                LastDragPos = pagePos }) },
+        Cmd.none
+
+    | EndDraggingWire wireId ->
+        { model with
+              Wires =
+                  model.Wires
+                  |> List.map (fun wire -> if wireId <> wire.Id then wire else { wire with IsDragging = false }) },
+        Cmd.none
+    | MouseMsg mMsg -> model, Cmd.ofMsg (Symbol(Symbol.MouseMsg mMsg))
 
 //---------------Other interface functions--------------------//
 
 /// Given a point on the canvas, returns the wire ID of a wire within a few pixels
 /// or None if no such. Where there are two close wires the nearest is taken. Used
 /// to determine which wire (if any) to select on a mouse click
-let wireToSelectOpt (wModel: Model) (pos: XYPos) : CommonTypes.ConnectionId option = 
-    failwith "Not implemented"
+let wireToSelectOpt (wModel: Model) (pos: XYPos): CommonTypes.ConnectionId option = failwith "Not implemented"
 
 //----------------------interface to Issie-----------------------//
-let extractWire (wModel: Model) (sId: ComponentId) : Component= 
-    failwithf "Not implemented"
+let extractWire (wModel: Model) (sId: ComponentId): Component = failwithf "Not implemented"
 
-let extractWires (wModel: Model) : Component list = 
-    failwithf "Not implemented"
+let extractWires (wModel: Model): Component list = failwithf "Not implemented"
 
 /// Update the symbol with matching componentId to comp, or add a new symbol based on comp.
-let updateSymbolModelWithComponent (symModel: Model) (comp: Component) =
-    failwithf "Not Implemented"
-
-
-
-    
-
-
-
+let updateSymbolModelWithComponent (symModel: Model) (comp: Component) = failwithf "Not Implemented"
