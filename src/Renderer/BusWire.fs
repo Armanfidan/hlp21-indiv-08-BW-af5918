@@ -35,15 +35,13 @@ type Model =
 
 //----------------------------Message Type-----------------------------------//
 
-/// Messages to update buswire model
-/// These are OK for the demo - but not the correct messages for
-/// a production system. In the real system wires must connection
-/// to ports, not symbols. In addition there will be other changes needed
-/// for highlighting, width inference, etc
 type Msg =
     | Symbol of Symbol.Msg
     | AddWire of Port * Port
     | SetColor of HighLightColour
+    | StartDraggingWire of wireId: ConnectionId * pagePos: XYPos
+    | DraggingWire of wireId: ConnectionId * pagePos: XYPos
+    | EndDraggingWire of wireId: ConnectionId
     | MouseMsg of MouseT
 
 /// look up wire in WireModel
