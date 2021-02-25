@@ -93,13 +93,19 @@ let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
     /// Position of the first corner: If there is enough space then xMid,
     /// otherwise minimum distance from source port
     let xCorner1 =
-        if xPositive && (yDiff < ha1 + ha2 || xDiff >= 2. * xMin) then xMid
-        else x1 + xMin
+        if xPositive
+           && (yDiff < ha1 + ha2 || xDiff >= 2. * xMin) then
+            xMid
+        else
+            x1 + xMin
     /// Position of the first corner: If there is enough space then xMid,
     /// otherwise minimum distance from target port
     let xCorner2 =
-        if xPositive && (yDiff < ha1 + ha2 || xDiff >= 2. * xMin) then xMid
-        else x2 - xMin
+        if xPositive
+           && (yDiff < ha1 + ha2 || xDiff >= 2. * xMin) then
+            xMid
+        else
+            x2 - xMin
 
     /// Vertical line segments
     let yCorner1 =
@@ -125,27 +131,16 @@ let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
 
     let yMidAdaptive2 =
         if yDiff >= ha1 + ha2 then yMid else yCorner2
-    
-    // Corner list    
-    [
-          { X = x1; Y = y1 }
-          { X = xCorner1; Y = y1 }
-          { X = xCorner1; Y = yMidAdaptive1 }
-          { X = xMid; Y = yMidAdaptive1 }
-          { X = xMid; Y = yMidAdaptive2 }
-          { X = xCorner2; Y = yMidAdaptive2 }
-          { X = xCorner2; Y = y2 }
-          { X = x2; Y = y2 }
-    ]    
 
-
-// type WireRenderProps = {
-//     key : ConnectionId
-//     WireP: Wire
-//     SourcePos: XYPos 
-//     TargetPos: XYPos
-//     WireColour: string
-//     WireWidth: string }
+    // Corner list
+    [ { X = x1; Y = y1 }
+      { X = xCorner1; Y = y1 }
+      { X = xCorner1; Y = yMidAdaptive1 }
+      { X = xMid; Y = yMidAdaptive1 }
+      { X = xMid; Y = yMidAdaptive2 }
+      { X = xCorner2; Y = yMidAdaptive2 }
+      { X = xCorner2; Y = y2 }
+      { X = x2; Y = y2 } ]
 
 type WireRenderProps =
     { key: ConnectionId
