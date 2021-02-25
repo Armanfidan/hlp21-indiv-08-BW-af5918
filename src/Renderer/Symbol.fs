@@ -159,13 +159,16 @@ type private RenderComponentProps =
 let private renderComponent =
     FunctionComponent.Of
         ((fun (props: RenderComponentProps) ->
-            let inputPorts = List.filter (fun port -> port.PortType = PortType.Input) props.Component.Ports
-            let outputPorts = List.filter (fun port -> port.PortType = PortType.Output) props.Component.Ports
-            
+            let inputPorts =
+                List.filter (fun port -> port.PortType = PortType.Input) props.Component.Ports
+
+            let outputPorts =
+                List.filter (fun port -> port.PortType = PortType.Output) props.Component.Ports
+
             // Dummy component has one input and one output
             let inputPort = inputPorts.Head
             let outputPort = outputPorts.Head
-            
+
             let handleMouseMove =
                 Hooks.useRef (fun (ev: Types.Event) ->
                     let ev = ev :?> Types.MouseEvent
@@ -177,50 +180,40 @@ let private renderComponent =
             let colour =
                 if props.Component.IsDragging then "lightblue" else "grey"
 
-            g [] [
-                polygon [ OnMouseUp(fun _ ->
-                              document.removeEventListener ("mousemove", handleMouseMove.current)
-                              EndDragging props.Component.Id |> props.Dispatch)
-                          OnMouseDown(fun ev ->
-                              StartDragging(props.Component.Id, posOf ev.pageX ev.pageY)
-                              |> props.Dispatch
+            g [ OnMouseUp(fun _ ->
+                    document.removeEventListener ("mousemove", handleMouseMove.current)
+                    EndDragging props.Component.Id |> props.Dispatch)
+                OnMouseDown(fun ev ->
+                    StartDragging(props.Component.Id, posOf ev.pageX ev.pageY)
+                    |> props.Dispatch
 
-                              document.addEventListener ("mousemove", handleMouseMove.current))
-
-                          SVGAttr.Points
+                    document.addEventListener ("mousemove", handleMouseMove.current)) ] [
+                polygon [ SVGAttr.Points
                               (sprintf
                                   "%0.2f,%0.2f %0.2f,%0.2f %0.2f,%0.2f %0.2f,%0.2f"
-                                   (props.Component.Pos.X) (props.Component.Pos.Y - (props.Component.Height / 2.))
-                                   (props.Component.Pos.X + props.Component.Height) (props.Component.Pos.Y - (props.Component.Height / 2.))
-                                   (props.Component.Pos.X + props.Component.Height) (props.Component.Pos.Y + (props.Component.Height / 2.))
-                                   (props.Component.Pos.X) (props.Component.Pos.Y + (props.Component.Height / 2.)))
+                                   (props.Component.Pos.X)
+                                   (props.Component.Pos.Y
+                                    - (props.Component.Height / 2.))
+                                   (props.Component.Pos.X + props.Component.Height)
+                                   (props.Component.Pos.Y
+                                    - (props.Component.Height / 2.))
+                                   (props.Component.Pos.X + props.Component.Height)
+                                   (props.Component.Pos.Y
+                                    + (props.Component.Height / 2.))
+                                   (props.Component.Pos.X)
+                                   (props.Component.Pos.Y
+                                    + (props.Component.Height / 2.)))
                           SVGAttr.Fill colour
                           SVGAttr.Stroke colour
                           SVGAttr.StrokeWidth 1 ] []
-                
-                circle [ OnMouseUp(fun _ ->
-                             document.removeEventListener ("mousemove", handleMouseMove.current)
-                             EndDragging inputPort.Id |> props.Dispatch)
-                         OnMouseDown(fun ev ->
-                             StartDragging(inputPort.Id, posOf ev.pageX ev.pageY)
-                             |> props.Dispatch
 
-                             document.addEventListener ("mousemove", handleMouseMove.current))
-                         Cx inputPort.Pos.X
+                circle [ Cx inputPort.Pos.X
                          Cy inputPort.Pos.Y
                          R inputPort.Width
                          SVGAttr.Fill "darkgrey"
                          SVGAttr.Stroke "grey"
                          SVGAttr.StrokeWidth 1 ] []
-                circle [ OnMouseUp(fun _ ->
-                             document.removeEventListener ("mousemove", handleMouseMove.current)
-                             EndDragging outputPort.Id |> props.Dispatch)
-                         OnMouseDown(fun ev ->
-                             StartDragging(outputPort.Id, posOf ev.pageX ev.pageY)
-                             |> props.Dispatch
-
-                             document.addEventListener ("mousemove", handleMouseMove.current))
-                         Cx outputPort.Pos.X
+                circle [ Cx outputPort.Pos.X
                          Cy outputPort.Pos.Y
                          R outputPort.Width
                          SVGAttr.Fill "darkgrey"
@@ -233,7 +226,7 @@ let private renderComponent =
 /// View function for symbol layer of SVG
 let view (model: Model) (dispatch: Msg -> unit) =
     model
-    |> List.map (fun ({ Id = CommonTypes.ComponentId id } as circle) ->
+    |> List.map (fun ({ Id = ComponentId id } as circle) ->
         renderComponent
             { Component = circle
               Dispatch = dispatch
@@ -245,7 +238,7 @@ let view (model: Model) (dispatch: Msg -> unit) =
 
 // let findPort (host: Symbol) (portId: ComponentId) : Port Option =
 //     List.tryFind (fun port -> port.Id = portId) host.Ports
-//     
+//
 // let findSymbolWithPort (symModel: Model) (portId: ComponentId) : Port =
 //     let host = List.find (fun symbol -> findPort symbol portId <> None) symModel
 //     match findPort host portId with
