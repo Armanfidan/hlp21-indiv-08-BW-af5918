@@ -2,6 +2,7 @@
 
 open System
 open Symbol
+open Browser
 open CommonTypes
 open Fable.React
 open Fable.React.Props
@@ -22,8 +23,10 @@ type Wire =
       TargetPort: ComponentId
       IsError: bool
       Width: int
+      IsDragging: bool
       BoundingBoxes: BoundingBox list
-      Corners: XYPos list }
+      Corners: XYPos list
+      LastDragPos: XYPos }
 
 type Model =
     { Symbols: Symbol.Model
