@@ -23,6 +23,7 @@ module CommonTypes
         Pos: XYPos
         Width: int
         IsHighlighted: bool
+        IsDragging: bool
         ParentHeight: float
     }
 
