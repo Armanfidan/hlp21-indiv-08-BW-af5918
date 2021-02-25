@@ -61,7 +61,34 @@ let displaySvgWithZoom (zoom: float) (svgReact: ReactElement) (dispatch: Dispatc
         ]
     ]
 
+let boxContainsPoint (boundingBox: BoundingBox) (pagePos: XYPos): bool =
+    let p1 = boundingBox.P1
+    let p2 = boundingBox.P2
 
+    let xCondition = pagePos.X > p1.X && pagePos.X < p2.X
+    let yCondition = pagePos.Y < p1.Y && pagePos.Y > p2.Y
+
+    xCondition && yCondition
+
+/// Given a model and a position on the page (mouse position), returns the first wire that the mouse is on,
+/// along with the index of the segment of that wire that the mouse is on.
+let tryFindClickedSegment (pagePos: XYPos) (model: BusWire.Model): (Wire * int) option =
+    let wire =
+        model.Wires
+        |> List.tryFind (fun wire ->
+                let foundBoxes =
+                    List.tryFind (fun boundingBox -> boxContainsPoint boundingBox pagePos) wire.BoundingBoxes
+                
+                foundBoxes <> None)
+    match wire with
+    | Some w -> let segmentIndex =
+                    w.BoundingBoxes
+                    |> List.mapi (fun index boundingBox -> (index, boundingBox))
+                    |> List.tryFind (fun (_, boundingBox) -> boxContainsPoint boundingBox pagePos)
+                match segmentIndex with
+                | Some s -> Some (w, fst s)
+                | None -> None
+    | None -> None
 
 /// for the demo code
 let view (model: Model) (dispatch: Msg -> unit) =
