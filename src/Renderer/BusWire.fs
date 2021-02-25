@@ -313,10 +313,13 @@ let createWire (sourcePort: Port) (targetPort: Port): Wire =
       LastDragPos = { X = 0.; Y = 0. } }
 
 let init n () =
-    let symbols, cmd = Symbol.init()
-    let symIds = List.map (fun (sym:Symbol.Symbol) -> sym.Id) symbols
+    let symbols, cmd = Symbol.init ()
+
+    let symIds =
+        List.map (fun (sym: Symbol.Symbol) -> sym.Id) symbols
+
     let rng = Random 0
-    
+
     let makeRandomWire () =
         let n = symIds.Length
 
@@ -324,14 +327,21 @@ let init n () =
             match rng.Next(0, n - 1), rng.Next(0, n - 2) with
             | r1, r2 when r1 = r2 -> symbols.[r1], symbols.[n - 1]
             | r1, r2 -> symbols.[r1], symbols.[r2]
-            
-        let source = List.find (fun port -> port.PortType = PortType.Output) s1.Ports
-        let target = List.find (fun port -> port.PortType = PortType.Input) s2.Ports
-        
+
+        let source =
+            List.find (fun port -> port.PortType = PortType.Output) s1.Ports
+
+        let target =
+            List.find (fun port -> port.PortType = PortType.Input) s2.Ports
+
         createWire source target
-        
-    List.map (fun i -> makeRandomWire()) [1..n]
-    |> (fun wires -> {Wires=wires;Symbols=symbols; Colour=CommonTypes.Red},Cmd.none)
+
+    List.map (fun i -> makeRandomWire ()) [ 1 .. n ]
+    |> (fun wires ->
+        { Wires = wires
+          Symbols = symbols
+          Colour = Red },
+        Cmd.none)
 
 let update (msg : Msg) (model : Model): Model*Cmd<Msg> =
     match msg with
