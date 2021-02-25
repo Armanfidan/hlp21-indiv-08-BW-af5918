@@ -220,8 +220,8 @@ let view (model: Model) (dispatch: Msg -> unit) =
         model.Wires
         |> List.map (fun wire ->
             // So this wire's corners are changing
-            printf "Corners: %A" wire.Corners
-            printf "Boxes: %A" wire.BoundingBoxes
+            // printf "Corners: %A" wire.Corners
+            // printf "Boxes: %A" wire.BoundingBoxes
 
             let source = findPort model.Symbols wire.SourcePort
             let target = findPort model.Symbols wire.TargetPort
