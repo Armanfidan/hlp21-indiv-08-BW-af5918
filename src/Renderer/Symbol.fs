@@ -68,6 +68,7 @@ let posOf x y = { X = x; Y = y }
 let createNewSymbol (input: XYPos * float) =
     let pos, height = input
     let hostId = ComponentId(uuid ())
+
     { Pos = pos
       LastDragPos = { X = 0.; Y = 0. } // initial value can always be this
       IsDragging = false // initial value can always be this
@@ -82,16 +83,16 @@ let createNewSymbol (input: XYPos * float) =
               Pos = fst input
               Width = 5
               IsHighlighted = false
-              ParentHeight = height }
+              ParentHeight = height
+              IsDragging = false }
             { Id = ComponentId(uuid ())
               HostId = hostId
               PortType = PortType.Output
-              Pos =
-                  { fst input with
-                        X = pos.X + height }
+              Pos = { fst input with X = pos.X + height }
               Width = 5
               IsHighlighted = false
-              ParentHeight = height } ] }
+              ParentHeight = height
+              IsDragging = false } ] }
 
 
 /// Dummy function for test. The real init would probably have no symbols.
@@ -114,7 +115,8 @@ let update (msg: Msg) (model: Model): Model * Cmd<'a> =
             else
                 { sym with
                       LastDragPos = pagePos
-                      IsDragging = true }),
+                      IsDragging = true
+                      Ports = List.map (fun port -> { port with IsDragging = true }) sym.Ports }),
         Cmd.none
 
     | Dragging (rank, pagePos) ->
@@ -128,14 +130,18 @@ let update (msg: Msg) (model: Model): Model * Cmd<'a> =
                 { sym with
                       Pos = posAdd sym.Pos diff
                       LastDragPos = pagePos
-                      Ports = List.map (fun port ->
-                          { port with Pos = posAdd port.Pos diff }) sym.Ports
-                      }),
+                      Ports = List.map (fun port -> { port with Pos = posAdd port.Pos diff }) sym.Ports }),
         Cmd.none
 
     | EndDragging sId ->
         model
-        |> List.map (fun sym -> if sId <> sym.Id then sym else { sym with IsDragging = false }),
+        |> List.map (fun sym ->
+            if sId <> sym.Id then
+                sym
+            else
+                { sym with
+                      IsDragging = false }),
+                      // Ports = List.map (fun port -> { port with IsDragging = false }) sym.Ports }),
         Cmd.none
     | MouseMsg _ -> model, Cmd.none // allow unused mouse messags
     | _ -> failwithf "Not implemented"
