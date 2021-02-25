@@ -246,9 +246,12 @@ let view (model: Model) (dispatch: Msg -> unit) =
 
     g [] [ (g [] wires); symbols ]
 
+/// These boxes are in the same order as the corners, which makes it easy to pair them up with which line segment
+/// lies within them.
 let createBoundingBoxes (corners: XYPos list): BoundingBox list =
     let diff = { X = 5.; Y = 5. }
     let doubleDiff = { X = 10.; Y = 10. }
+    // Assuming there will always be at least three corners on any given wire
     let (firstCorner :: secondCorner :: rest) = corners
 
     rest
@@ -262,6 +265,8 @@ let createBoundingBoxes (corners: XYPos list): BoundingBox list =
         ))
            [ { P1 = posDiff firstCorner diff
                P2 = posAdd secondCorner diff } ]
+    |> List.rev
+     
 
 let createWire (sourcePort: Port) (targetPort: Port): Wire =
     let corners = findCorners sourcePort.Pos targetPort.Pos sourcePort.ParentHeight targetPort.ParentHeight
