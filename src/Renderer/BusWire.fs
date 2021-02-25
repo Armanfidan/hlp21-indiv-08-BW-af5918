@@ -269,37 +269,48 @@ let singleWireView model =
         ])
 
 
-let view (model:Model) (dispatch: Dispatch<Msg>)=
-    let wires = 
+let view (model: Model) (dispatch: Msg -> unit) =
+
+    let wires =
         model.Wires
         |> List.map (fun wire ->
+            // So this wire's corners are changing
+            printf "View: %A" wire.Corners
+
             let source = findPort model.Symbols wire.SourcePort
             let target = findPort model.Symbols wire.TargetPort
-            
-            let width = if source.Width = target.Width then source.Width
-                        else 0
-            
-            let props = {
-                key = wire.Id
-                SourcePos = source.Pos
-                TargetPos = target.Pos
-                SourceHeight = source.ParentHeight
-                TargetHeight = target.ParentHeight
-                WireColour = if not wire.IsError then model.Colour.Text() else Red.Text()
-                WireWidth = width }
-            singleWireView props)
-    let symbols = Symbol.view model.Symbols (fun sMsg -> dispatch (Symbol sMsg))
-    g [] [(g [] wires); symbols]
-    
-    
-let createWire (sourcePort: Port) (targetPort: Port) : Wire =
+
+            let width =
+                if source.Width = target.Width then source.Width else 0
+
+            let props =
+                { key = wire.Id
+                  // This is the id of the wire with changing corners
+                  Wire = wire
+                  Source = source
+                  Target = target
+                  WireColour = if not wire.IsError then model.Colour.Text() else Red.Text()
+                  WireWidth = width
+                  Dispatch = dispatch }
+
+            singleWireView model props)
+
+    let symbols =
+        Symbol.view model.Symbols (fun sMsg -> dispatch (Symbol sMsg))
+
+    g [] [ (g [] wires); symbols ]
+
+
+let createWire (sourcePort: Port) (targetPort: Port): Wire =
     { Id = ConnectionId(uuid ())
       SourcePort = sourcePort.Id
       TargetPort = targetPort.Id
       IsError = sourcePort.Width <> targetPort.Width
       Width = if sourcePort.Width = targetPort.Width then int sourcePort.Width else 3 // If there is an error then the width is 2, to make a thick red wire.
+      IsDragging = false
       BoundingBoxes = []
-      Corners = findCorners sourcePort.Pos targetPort.Pos sourcePort.ParentHeight targetPort.ParentHeight}
+      Corners = findCorners sourcePort.Pos targetPort.Pos sourcePort.ParentHeight targetPort.ParentHeight
+      LastDragPos = { X = 0.; Y = 0. } }
 
 let init n () =
     let symbols, cmd = Symbol.init()
