@@ -44,12 +44,20 @@ type Msg =
     | EndDraggingWire of wireId: ConnectionId
     | MouseMsg of MouseT
 
-/// look up wire in WireModel
-let wire (wModel: Model) (wId: CommonTypes.ConnectionId): Wire =
-     wModel.Wires
-     |> List.filter (fun wire -> wire.Id = wId)
-     |> List.head
+/// look up wire in the model
+let wire (model: Model) (wireId: ConnectionId): Wire =
+    model.Wires
+    |> List.filter (fun wire -> wire.Id = wireId)
+    |> List.head
 
+/// This returns the first wire that the port is connected to, but it won't work if a port is connected to
+/// multiple wires. I will fix/update this later.
+let wireFromPort (model: Model) (portId: ComponentId): Wire =
+    model.Wires
+    |> List.filter (fun wire ->
+        wire.SourcePort = portId
+        || wire.TargetPort = portId)
+    |> List.head
 
 let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
     // Midpoints
