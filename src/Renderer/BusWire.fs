@@ -358,12 +358,15 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
               Wires =
                   model.Wires
                   |> List.map (fun wire ->
+                      let source = findPort model.Symbols wire.SourcePort
+                      let target = findPort model.Symbols wire.TargetPort
                       if wireId <> wire.Id then
                           wire
                       else
                           { wire with
                                 LastDragPos = pagePos
-                                IsDragging = true })
+                                IsDragging = true
+                                Corners = findCorners source.Pos target.Pos source.ParentHeight target.ParentHeight })
               Symbols =
                   model.Symbols
                   |> List.map (fun symbol ->
