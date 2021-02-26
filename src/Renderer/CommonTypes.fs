@@ -8,6 +8,8 @@ module CommonTypes
     //==========================================//
     // Canvas state mapped to f# data structure //
     //==========================================//
+    
+    
 
     // Specify the position and type of a port in a JSComponent.
     type PortType = Input | Output
@@ -15,7 +17,12 @@ module CommonTypes
     /// SHA hash unique to a component - common between JS and F#
     [<Erase>]
     type ComponentId      = | ComponentId of string
-
+    
+    type BoundingBox = {
+        P1: XYPos
+        P2: XYPos
+    }
+    
     type Port = {
         Id : ComponentId
         HostId: ComponentId
@@ -25,6 +32,7 @@ module CommonTypes
         IsHighlighted: bool
         IsDragging: bool
         ParentHeight: float
+        BoundingBox: BoundingBox
     }
 
     /// Name identified the LoadedComponent used.
