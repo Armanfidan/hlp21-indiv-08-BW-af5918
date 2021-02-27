@@ -40,9 +40,9 @@ type Model =
 //----------------------------Message Type-----------------------------------//
 
 type Msg =
-    | Symbol of Symbol.Msg
-    | AddWire of Port * Port
-    | SetColor of HighLightColour
+    | UpdateSymbol of Symbol.Msg
+    | CreateConnection of Port * Port
+    | SetColour of HighLightColour
     | StartDraggingWire of wireId: ConnectionId * pagePos: XYPos
     | DraggingWire of wireId: ConnectionId * pagePos: XYPos
     | EndDraggingWire of wireId: ConnectionId
@@ -440,14 +440,14 @@ let segmentOrientation (corners: XYPos list) (index: int): Orientation =
 
 let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
     match msg with
-    | Symbol sMsg ->
+    | UpdateSymbol sMsg ->
         let sm, sCmd = Symbol.update sMsg model.Symbols
-        { model with Symbols = sm }, Cmd.map Symbol sCmd
-    | AddWire (source, target) ->
+        { model with Symbols = sm }, Cmd.map UpdateSymbol sCmd
+    | CreateConnection (source, target) ->
         { model with
               Wires = (createWire source target) :: model.Wires },
         Cmd.none
-    | SetColor c -> { model with Colour = c }, Cmd.none
+    | SetColour c -> { model with Colour = c }, Cmd.none
     | StartDraggingWire (wireId, pagePos) ->
         { model with
               Wires =
@@ -456,8 +456,18 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                       let source = findPort model.Symbols wire.SourcePort
                       let target = findPort model.Symbols wire.TargetPort
 
+                      let corners =
+                              if source.IsDragging || target.IsDragging
+                              then findCorners source.Pos target.Pos source.ParentHeight target.ParentHeight
+                              else wire.Corners
+
+                      let boundingBoxes = createBoundingBoxes corners
+                      
                       if wireId <> wire.Id then
-                          wire
+                          { wire with
+                                    LastDragPos = pagePos
+                                    Corners = corners
+                                    BoundingBoxes = boundingBoxes }
                       else
                           let corners =
                               if source.IsDragging || target.IsDragging
