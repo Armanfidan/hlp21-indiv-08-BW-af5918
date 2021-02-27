@@ -85,9 +85,9 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
             | _ -> CommonTypes.Grey
 
         printfn "Key:%A" c
-        model, Cmd.ofMsg (Wire <| BusWire.SetColor c)
+        model, Cmd.ofMsg (Wire <| BusWire.SetColour c)
 
 let init () =
     // Don't forget to change this back to 400 before demo!
-    let model, cmds = (BusWire.init 1) ()
+    let model, cmds = (BusWire.init 3) ()
     { Wire = model }, Cmd.map Wire cmds
