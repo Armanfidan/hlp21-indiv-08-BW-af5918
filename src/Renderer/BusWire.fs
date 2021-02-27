@@ -306,7 +306,9 @@ let view (model: Model) (dispatch: Msg -> unit) =
 
 
 let createWire (sourcePort: Port) (targetPort: Port): Wire =
-    let corners = findCorners sourcePort.Pos targetPort.Pos sourcePort.ParentHeight targetPort.ParentHeight
+    let corners =
+        findCorners sourcePort.Pos targetPort.Pos sourcePort.ParentHeight targetPort.ParentHeight
+
     { Id = ConnectionId(uuid ())
       SourcePort = sourcePort.Id
       TargetPort = targetPort.Id
@@ -315,6 +317,7 @@ let createWire (sourcePort: Port) (targetPort: Port): Wire =
       IsDragging = false
       BoundingBoxes = createBoundingBoxes corners
       Corners = corners
+      DraggedCornerIndex = 0
       LastDragPos = { X = 0.; Y = 0. } }
 
 let init n () =
