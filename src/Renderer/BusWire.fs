@@ -154,15 +154,16 @@ let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
 /// or when checking that a point is within them.
 let createBoundingBoxes (corners: XYPos list): WireBoundingBox list =
     let diff = { X = 5.; Y = 5. }
-    // Assuming there will always be at least three corners on any given wire
-    let (firstCorner :: secondCorner :: rest) = corners
+    /// Assuming there will always be at least three corners on any given wire. Remove the first and last
+    /// corners because we do not want the end segments to be draggable
+    let (firstCorner :: secondCorner :: rest) = corners.[ 1 .. corners.Length - 2 ]
 
     rest
     |> List.fold (fun boxes currentCorner ->
         (let previousBox = List.head boxes
          let p1 = previousBox.Prev
          let p2 = currentCorner
-         printf "p1: %A, p2: %A" p1 p2
+         // printf "p1: %A, p2: %A" p1 p2
          /// Problem: If the corners are switched, P2 of the previous box is actually P1. So the next box is created
          /// as a huge rectangle. To fix this, I made a new field in WireBoundingBox which keeps the previous corner.
          let topLeft =
@@ -200,7 +201,7 @@ type WireRenderProps =
 /// react virtual DOM SVG for one wire
 /// In general one wire will be multiple (right-angled) segments.
 
-let singleWireView model =
+let singleWireView =
     FunctionComponent.Of(fun (props: WireRenderProps) ->
         // This should be the wire with changing corners
 
@@ -277,7 +278,6 @@ let view (model: Model) (dispatch: Msg -> unit) =
     let wires =
         model.Wires
         |> List.map (fun wire ->
-            // So this wire's corners are changing
             // printf "Corners: %A" wire.Corners
             // printf "Boxes: %A" wire.BoundingBoxes
 
@@ -289,7 +289,6 @@ let view (model: Model) (dispatch: Msg -> unit) =
 
             let props =
                 { key = wire.Id
-                  // This is the id of the wire with changing corners
                   Wire = wire
                   Source = source
                   Target = target
@@ -297,7 +296,7 @@ let view (model: Model) (dispatch: Msg -> unit) =
                   WireWidth = width
                   Dispatch = dispatch }
 
-            singleWireView model props)
+            singleWireView props)
 
     let symbols =
         Symbol.view model.Symbols (fun sMsg -> dispatch (Symbol sMsg))
@@ -319,7 +318,7 @@ let createWire (sourcePort: Port) (targetPort: Port): Wire =
       IsDragging = false
       BoundingBoxes = createBoundingBoxes corners
       Corners = corners
-      DraggedCornerIndex = 0
+      DraggedCornerIndex = 1
       LastDragPos = { X = 0.; Y = 0. } }
 
 let init n () =
