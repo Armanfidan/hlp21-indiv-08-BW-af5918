@@ -15,7 +15,7 @@ open Helpers
 //------------------------------BusWire Types-----------------------------//
 //------------------------------------------------------------------------//
 
-type BoundingBox = { P1: XYPos; P2: XYPos }
+type BoundingBox = { P1: XYPos; P2: XYPos; Prev: XYPos }
 
 // Add bounding boxes to each segment of the wire.
 type Wire =
@@ -27,6 +27,7 @@ type Wire =
       IsDragging: bool
       BoundingBoxes: BoundingBox list
       Corners: XYPos list
+      DraggedCornerIndex: int
       LastDragPos: XYPos }
 
 type Model =
