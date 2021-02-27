@@ -481,6 +481,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                       if wireId <> wire.Id then
                           wire
                       else
+                          let i = wire.DraggedCornerIndex
                           let diff = posDiff pagePos wire.LastDragPos
                           let orientation = segmentOrientation wire.Corners i
 
