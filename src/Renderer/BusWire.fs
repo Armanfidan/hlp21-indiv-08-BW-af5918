@@ -144,6 +144,48 @@ let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
       { X = xCorner2; Y = y2 }
       { X = x2; Y = y2 } ]
 
+/// These boxes are in the same order as the corners, which makes it easy to pair them up with which line segment
+/// lies within them.
+/// The lines can be in any orientation. The top left corner is defined as the top left of
+/// the former corner, and the bottom right corner is the bottom right of the latter corner.
+/// However, the lines are sometimes inverted (former corner is on the right and the latter
+/// is on the left). This means that I need to be more careful when either creating the boxes
+/// or when checking that a point is within them.
+let createBoundingBoxes (corners: XYPos list): BoundingBox list =
+    let diff = { X = 5.; Y = 5. }
+    // Assuming there will always be at least three corners on any given wire
+    let (firstCorner :: secondCorner :: rest) = corners
+
+    rest
+    |> List.fold (fun boxes currentCorner ->
+        (let previousBox = List.head boxes
+         let p1 = previousBox.Prev
+         let p2 = currentCorner
+         printf "p1: %A, p2: %A" p1 p2
+         /// Problem: If the corners are switched, P2 of the previous box is actually P1. So the next box is created
+         /// as a huge rectangle.
+         let topLeft =
+             if (p1.X < p2.X && p1.Y = p2.Y)
+                || (p1.X = p2.X && p1.Y < p2.Y) then
+                 p1
+             else
+                 p2
+
+         let bottomRight = if topLeft = p1 then p2 else p1
+
+         { P1 = posDiff topLeft diff
+           P2 = posAdd bottomRight diff
+           Prev = p2 }
+         :: boxes
+
+        ))
+           /// I can define the first box like this since it will always emanate from an output, meaning that it will
+           /// always face to the right. I will have to change this when we add different symbol orientations.
+           [ { P1 = posDiff firstCorner diff
+               P2 = posAdd secondCorner diff
+               Prev = secondCorner } ]
+    |> List.rev
+
 type WireRenderProps =
     { key: ConnectionId
       Wire: Wire
@@ -247,27 +289,8 @@ let view (model: Model) (dispatch: Msg -> unit) =
 
     g [] [ (g [] wires); symbols ]
 
-/// These boxes are in the same order as the corners, which makes it easy to pair them up with which line segment
-/// lies within them.
-let createBoundingBoxes (corners: XYPos list): BoundingBox list =
-    let diff = { X = 5.; Y = 5. }
-    let doubleDiff = { X = 10.; Y = 10. }
-    // Assuming there will always be at least three corners on any given wire
-    let (firstCorner :: secondCorner :: rest) = corners
 
-    rest
-    |> List.fold (fun boxes currentCorner ->
-        (let previousBox = List.head boxes
 
-         { P1 = posDiff previousBox.P2 doubleDiff
-           P2 = posAdd currentCorner diff }
-         :: boxes
-
-        ))
-           [ { P1 = posDiff firstCorner diff
-               P2 = posAdd secondCorner diff } ]
-    |> List.rev
-     
 
 let createWire (sourcePort: Port) (targetPort: Port): Wire =
     let corners = findCorners sourcePort.Pos targetPort.Pos sourcePort.ParentHeight targetPort.ParentHeight
