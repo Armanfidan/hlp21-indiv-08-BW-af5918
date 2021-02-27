@@ -9,7 +9,6 @@ open Fable.Core.JsInterop
 /// position on SVG canvas
 type XYPos = { X: float; Y: float }
 
-type BoundingBox = { P1: XYPos; P2: XYPos }
 
 type MouseOp =
     /// button up

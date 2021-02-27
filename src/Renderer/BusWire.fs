@@ -1,9 +1,9 @@
 ﻿module BusWire
 
 open System
+open CommonTypes
 open Symbol
 open Browser
-open CommonTypes
 open Fable.React
 open Fable.React.Props
 open Elmish
@@ -15,7 +15,8 @@ open Helpers
 //------------------------------BusWire Types-----------------------------//
 //------------------------------------------------------------------------//
 
-type BoundingBox = { P1: XYPos; P2: XYPos; Prev: XYPos }
+type BoundingBox = { P1: XYPos; P2: XYPos }
+type WireBoundingBox = { Box: BoundingBox; Prev: XYPos }
 
 // Add bounding boxes to each segment of the wire.
 type Wire =
@@ -25,7 +26,7 @@ type Wire =
       IsError: bool
       Width: int
       IsDragging: bool
-      BoundingBoxes: BoundingBox list
+      BoundingBoxes: WireBoundingBox list
       Corners: XYPos list
       DraggedCornerIndex: int
       LastDragPos: XYPos }
@@ -151,7 +152,7 @@ let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
 /// However, the lines are sometimes inverted (former corner is on the right and the latter
 /// is on the left). This means that I need to be more careful when either creating the boxes
 /// or when checking that a point is within them.
-let createBoundingBoxes (corners: XYPos list): BoundingBox list =
+let createBoundingBoxes (corners: XYPos list): WireBoundingBox list =
     let diff = { X = 5.; Y = 5. }
     // Assuming there will always be at least three corners on any given wire
     let (firstCorner :: secondCorner :: rest) = corners
@@ -163,7 +164,7 @@ let createBoundingBoxes (corners: XYPos list): BoundingBox list =
          let p2 = currentCorner
          printf "p1: %A, p2: %A" p1 p2
          /// Problem: If the corners are switched, P2 of the previous box is actually P1. So the next box is created
-         /// as a huge rectangle.
+         /// as a huge rectangle. To fix this, I made a new field in WireBoundingBox which keeps the previous corner.
          let topLeft =
              if (p1.X < p2.X && p1.Y = p2.Y)
                 || (p1.X = p2.X && p1.Y < p2.Y) then
@@ -173,16 +174,17 @@ let createBoundingBoxes (corners: XYPos list): BoundingBox list =
 
          let bottomRight = if topLeft = p1 then p2 else p1
 
-         { P1 = posDiff topLeft diff
-           P2 = posAdd bottomRight diff
+         { Box =
+              { P1 = posDiff topLeft diff
+                P2 = posAdd bottomRight diff }
            Prev = p2 }
          :: boxes
 
         ))
            /// I can define the first box like this since it will always emanate from an output, meaning that it will
            /// always face to the right. I will have to change this when we add different symbol orientations.
-           [ { P1 = posDiff firstCorner diff
-               P2 = posAdd secondCorner diff
+           [ { Box = { P1 = posDiff firstCorner diff
+                       P2 = posAdd secondCorner diff }
                Prev = secondCorner } ]
     |> List.rev
 
@@ -226,14 +228,14 @@ let singleWireView model =
                 (polygon [ SVGAttr.Points
                                (sprintf
                                    "%0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f"
-                                    box.P1.X // First corner
-                                    box.P1.Y
-                                    box.P2.X // Second corner
-                                    box.P1.Y
-                                    box.P2.X // Third corner
-                                    box.P2.Y
-                                    box.P1.X // Fourth corner
-                                    box.P2.Y)
+                                    box.Box.P1.X // First corner
+                                    box.Box.P1.Y
+                                    box.Box.P2.X // Second corner
+                                    box.Box.P1.Y
+                                    box.Box.P2.X // Third corner
+                                    box.Box.P2.Y
+                                    box.Box.P1.X // Fourth corner
+                                    box.Box.P2.Y)
                            SVGAttr.Stroke "blue"
                            SVGAttr.Fill "lightblue"
                            SVGAttr.Opacity 0.3 ] []))
@@ -356,9 +358,9 @@ let init n () =
 /// However, the lines are sometimes inverted (former corner is on the right and the latter
 /// is on the left). This means that I need to be more careful when either creating the boxes
 /// or when checking that a point is within them.
-let boxContainsPoint (boundingBox: BoundingBox) (pagePos: XYPos): bool =
-    let p1 = boundingBox.P1
-    let p2 = boundingBox.P2
+let boxContainsPoint (boundingBox: WireBoundingBox) (pagePos: XYPos): bool =
+    let p1 = boundingBox.Box.P1
+    let p2 = boundingBox.Box.P2
 
     let xCondition = pagePos.X > p1.X && pagePos.X < p2.X
     let yCondition = pagePos.Y > p1.Y && pagePos.Y < p2.Y

@@ -27,10 +27,6 @@ type Model = Symbol list
 
 //----------------------------Message Type-----------------------------------//
 
-/// Messages to update symbol model
-/// These are OK for the demo - but possibly not the correct messages for
-/// a production system, where we need to drag groups of symbols as well,
-/// and also select and deselect symbols, and specify real symbols, not circles
 type Msg =
     /// Mouse info with coords adjusted form top-level zoom
     | MouseMsg of MouseT
@@ -54,13 +50,6 @@ let posAdd a b = { X = a.X + b.X; Y = a.Y + b.Y }
 
 let posOf x y = { X = x; Y = y }
 
-
-//-----------------------------Skeleton Model Type for symbols----------------//
-
-
-
-
-//-----------------------Skeleton Message type for symbols---------------------//
 
 /// Symbol creation: a unique Id is given to the symbol, found from uuid.
 /// The parameters of this function must be enough to specify the symbol completely
@@ -95,7 +84,6 @@ let createNewSymbol (input: XYPos * float) =
               IsDragging = false } ] }
 
 
-/// Dummy function for test. The real init would probably have no symbols.
 let init () =
     [ ({ X = 100.; Y = 100. }, 100.)
       ({ X = 500.; Y = 300. }, 100.) ]
