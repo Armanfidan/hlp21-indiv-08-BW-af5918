@@ -311,6 +311,67 @@ let init n () =
           Colour = Red },
         Cmd.none)
 
+/// The lines can be in any orientation. The top left corner is defined as the top left of
+/// the former corner, and the bottom right corner is the bottom right of the latter corner.
+/// However, the lines are sometimes inverted (former corner is on the right and the latter
+/// is on the left). This means that I need to be more careful when either creating the boxes
+/// or when checking that a point is within them.
+let boxContainsPoint (boundingBox: BoundingBox) (pagePos: XYPos): bool =
+    let p1 = boundingBox.P1
+    let p2 = boundingBox.P2
+
+    let xCondition = pagePos.X > p1.X && pagePos.X < p2.X
+    let yCondition = pagePos.Y > p1.Y && pagePos.Y < p2.Y
+    // if xCondition && yCondition then
+    // printf "%A contains the point %A." boundingBox pagePos
+    xCondition && yCondition
+
+/// Given a model and a position on the page (mouse position), returns the first wire that the mouse is on,
+/// along with the index of the segment of that wire that the mouse is on.
+let tryFindClickedWire (pagePos: XYPos) (model: Model): Wire option =
+    model.Wires
+    |> List.tryFind (fun wire ->
+        let foundBoxes =
+            List.tryFind (fun boundingBox -> boxContainsPoint boundingBox pagePos) wire.BoundingBoxes
+
+        foundBoxes <> None)
+
+/// This one was made to work with options in case a wire isn't clicked but now that's not going to be the case
+/// so we can simplify the implementation.
+// let tryFindClickedSegment (pagePos: XYPos) (wire: Wire option) : int option =
+//     match wire with
+//     | Some w -> let segmentIndex =
+//                     w.BoundingBoxes
+//                     |> List.mapi (fun index boundingBox -> (index, boundingBox))
+//                     |> List.tryFind (fun (_, boundingBox) -> boxContainsPoint boundingBox pagePos)
+//                 match segmentIndex with
+//                 | Some s -> Some <| fst s
+//                 | None -> None
+//     | None -> None
+
+let findClickedSegment (pagePos: XYPos) (wire: Wire): int =
+    printf "Finding clicked segment. Bounding boxes: %A" wire.BoundingBoxes
+    printf "Mouse position: %A" pagePos
+
+    let segmentIndex =
+        wire.BoundingBoxes
+        |> List.mapi (fun index boundingBox -> (index, boundingBox))
+        |> List.find (fun (_, boundingBox) -> boxContainsPoint boundingBox pagePos)
+
+    fst segmentIndex
+
+type Orientation =
+    | Vertical
+    | Horizontal
+
+let segmentOrientation (corners: XYPos list) (index: int): Orientation =
+    let corner1 = corners.[index]
+    let corner2 = corners.[index + 1]
+
+    if corner1.X = corner2.X && corner1.Y <> corner2.Y
+    then Vertical
+    else Horizontal
+
 let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
     match msg with
     | Symbol sMsg ->
