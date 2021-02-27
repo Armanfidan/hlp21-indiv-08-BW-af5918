@@ -335,7 +335,7 @@ let view (model: Model) (dispatch: Msg -> unit) =
             singleWireView props)
 
     let symbols =
-        Symbol.view model.Symbols (fun sMsg -> dispatch (Symbol sMsg))
+        Symbol.view model.Symbols (fun sMsg -> dispatch (UpdateSymbol sMsg))
 
     g [] [ (g [] wires); symbols ]
 
@@ -469,13 +469,6 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                                     Corners = corners
                                     BoundingBoxes = boundingBoxes }
                       else
-                          let corners =
-                              if source.IsDragging || target.IsDragging
-                              then findCorners source.Pos target.Pos source.ParentHeight target.ParentHeight
-                              else wire.Corners
-
-                          let boundingBoxes = createBoundingBoxes corners
-
                           let i =
                               tryFindClickedSegment
                                   pagePos
@@ -568,4 +561,4 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                   model.Wires
                   |> List.map (fun wire -> if wireId <> wire.Id then wire else { wire with IsDragging = false }) },
         Cmd.none
-    | MouseMsg mMsg -> model, Cmd.ofMsg (Symbol(Symbol.MouseMsg mMsg))
+    | MouseMsg mMsg -> model, Cmd.ofMsg (UpdateSymbol(Symbol.MouseMsg mMsg))
