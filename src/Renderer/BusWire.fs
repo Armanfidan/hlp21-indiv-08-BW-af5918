@@ -482,7 +482,36 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                           wire
                       else
                           let diff = posDiff pagePos wire.LastDragPos
-                          let corners = List.map (fun corner -> posAdd corner diff) wire.Corners
+                          let orientation = segmentOrientation wire.Corners i
+
+                          printf
+                              "Corners: index %d and %d, (%A and %A)."
+                              i
+                              (i + 1)
+                              wire.Corners.[i]
+                              wire.Corners.[i + 1]
+
+                          printf "Segment orientation: %A" orientation
+
+                          let adjusted =
+                              match orientation with
+                              | Vertical ->
+                                  { wire.Corners.[i] with
+                                        X = wire.Corners.[i].X + diff.X },
+                                  { wire.Corners.[i + 1] with
+                                        X = wire.Corners.[i + 1].X + diff.X }
+
+                              | Horizontal ->
+                                  { wire.Corners.[i] with
+                                        Y = wire.Corners.[i].Y + diff.Y },
+                                  { wire.Corners.[i + 1] with
+                                        Y = wire.Corners.[i + 1].Y + diff.Y }
+
+                          let corners =
+                              wire.Corners.[..i - 1]
+                              @ [ fst adjusted; snd adjusted ]
+                                @ wire.Corners.[i + 2..]
+
                           { wire with
                                 /// Change this to find the two corners that the mouse was between, then move
                                 /// those corners only.
