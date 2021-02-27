@@ -246,7 +246,7 @@ let singleWireView model =
                 StartDraggingWire(props.Wire.Id, posOf ev.pageX ev.pageY)
                 |> props.Dispatch
 
-                document.addEventListener ("mousemove", handleMouseMove.current)) ] [
+                document.addEventListener ("mousemove", handleMouseMove.current)) ] ([
             // --------------------Port extensions-------------------------
             polyline [ SVGAttr.Points
                            (sprintf "%0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f
@@ -260,23 +260,15 @@ let singleWireView model =
                                (sprintf "%d"
                                 <| if props.WireWidth = 0 then 3 else props.WireWidth))
                        SVGAttr.FillOpacity "0" ] []
-            if props.WireWidth > 1 then
+            if props.WireWidth <> 1 then
                 text [ SVGAttr.X(corners.[0].X + 6.)
                        SVGAttr.Y(corners.[0].Y - 6.)
                        SVGAttr.Stroke props.WireColour
                        SVGAttr.Fill props.WireColour ] [
-                    str <| sprintf "%d" props.WireWidth
-                ]
-            elif props.WireWidth = 0 then
-                text [ SVGAttr.X(corners.[0].X + 6.)
-                       SVGAttr.Y(corners.[0].Y - 6.)
-                       SVGAttr.Stroke props.WireColour
-                       SVGAttr.Fill props.WireColour ] [
-                    str "Error: widths do not match"
-                ]
-
-        ])
-
+                    widthText
+                ]    
+        ] @ boxes)
+    )
 
 let view (model: Model) (dispatch: Msg -> unit) =
 
