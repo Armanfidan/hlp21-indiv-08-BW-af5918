@@ -377,29 +377,17 @@ let tryFindClickedWire (pagePos: XYPos) (model: Model): Wire option =
 
         foundBoxes <> None)
 
-/// This one was made to work with options in case a wire isn't clicked but now that's not going to be the case
-/// so we can simplify the implementation.
-// let tryFindClickedSegment (pagePos: XYPos) (wire: Wire option) : int option =
-//     match wire with
-//     | Some w -> let segmentIndex =
-//                     w.BoundingBoxes
-//                     |> List.mapi (fun index boundingBox -> (index, boundingBox))
-//                     |> List.tryFind (fun (_, boundingBox) -> boxContainsPoint boundingBox pagePos)
-//                 match segmentIndex with
-//                 | Some s -> Some <| fst s
-//                 | None -> None
-//     | None -> None
-
-let findClickedSegment (pagePos: XYPos) (wire: Wire): int =
-    printf "Finding clicked segment. Bounding boxes: %A" wire.BoundingBoxes
-    printf "Mouse position: %A" pagePos
-
+let tryFindClickedSegment (pagePos: XYPos) (wire: Wire): int option =
+    // printf "Finding clicked segment. Bounding boxes: %A" wire.BoundingBoxes
+    // printf "Mouse position: %A" pagePos
     let segmentIndex =
         wire.BoundingBoxes
         |> List.mapi (fun index boundingBox -> (index, boundingBox))
-        |> List.find (fun (_, boundingBox) -> boxContainsPoint boundingBox pagePos)
+        |> List.tryFind (fun (_, boundingBox) -> boxContainsPoint boundingBox pagePos)
+    match segmentIndex with
+    | Some segment -> Some (fst segment + 1)
+    | None -> None
 
-    fst segmentIndex
 
 type Orientation =
     | Vertical
@@ -442,20 +430,26 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                           let boundingBoxes = createBoundingBoxes corners
 
                           let i =
-                              findClickedSegment
+                              tryFindClickedSegment
                                   pagePos
                                   { wire with
                                         Corners = corners
                                         BoundingBoxes = boundingBoxes }
-                          // if i <> 0 && i <> boundingBoxes.Length - 1
-                          // then
-                          { wire with
-                                LastDragPos = pagePos
-                                IsDragging = true
-                                Corners = corners
-                                DraggedCornerIndex = i
-                                BoundingBoxes = boundingBoxes }
-                      // else wire
+                          // printf "Dragged corner index: %d, Corners: %A, %A" i corners.[i] corners.[i + 1]
+                          
+                          match i with
+                          | Some i ->
+                              { wire with
+                                    LastDragPos = pagePos
+                                    IsDragging = true
+                                    Corners = corners
+                                    DraggedCornerIndex = i
+                                    BoundingBoxes = boundingBoxes }
+                          | None ->
+                              { wire with
+                                    LastDragPos = pagePos
+                                    Corners = corners
+                                    BoundingBoxes = boundingBoxes }
                       )
               Symbols =
                   model.Symbols
@@ -479,7 +473,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
               Wires =
                   model.Wires
                   |> List.map (fun wire ->
-                      if wireId <> wire.Id then
+                      if wireId <> wire.Id || not wire.IsDragging then
                           wire
                       else
                           let i = wire.DraggedCornerIndex
