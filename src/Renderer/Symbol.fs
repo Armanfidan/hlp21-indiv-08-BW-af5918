@@ -39,7 +39,7 @@ type Msg =
     /// coords not adjusted for top-level zoom
     | Dragging of sId: CommonTypes.ComponentId * pagePos: XYPos
     | EndDragging of sId: CommonTypes.ComponentId
-    | AddCircle of XYPos * float // used by demo code to add a circle
+    | AddComponent of XYPos * float // used by demo code to add a circle
     | DeleteSymbol of sId: CommonTypes.ComponentId
     | UpdateSymbolModelWithComponent of CommonTypes.Component
 
@@ -105,7 +105,7 @@ let init () =
 /// update function which displays symbols
 let update (msg: Msg) (model: Model): Model * Cmd<'a> =
     match msg with
-    | AddCircle (pos, height) -> createNewSymbol (pos, height) :: model, Cmd.none
+    | AddComponent (pos, height) -> createNewSymbol (pos, height) :: model, Cmd.none
     | DeleteSymbol sId -> List.filter (fun sym -> sym.Id <> sId) model, Cmd.none
     | StartDragging (sId, pagePos) ->
         model
