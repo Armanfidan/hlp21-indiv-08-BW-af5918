@@ -207,8 +207,8 @@ let singleWireView model =
             then findCorners props.Source.Pos props.Target.Pos props.Source.ParentHeight props.Target.ParentHeight
             else props.Wire.Corners
         //
-        // printf "Render: %A" props.Wire.Corners
-        // printf "Render corners: %A" corners
+        // // printf "Render: %A" props.Wire.Corners
+        // // printf "Render corners: %A" corners
 
         let handleMouseMove =
             Hooks.useRef (fun (ev: Types.Event) ->
@@ -216,6 +216,27 @@ let singleWireView model =
 
                 DraggingWire(props.Wire.Id, posOf ev.pageX ev.pageY)
                 |> props.Dispatch)
+
+        let widthText =
+            if props.WireWidth = 0 then str "Error: widths do not match" else str <| sprintf "%d" props.WireWidth
+
+        let boxes : ReactElement list =
+            createBoundingBoxes corners
+            |> List.map (fun box ->
+                (polygon [ SVGAttr.Points
+                               (sprintf
+                                   "%0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f"
+                                    box.P1.X // First corner
+                                    box.P1.Y
+                                    box.P2.X // Second corner
+                                    box.P1.Y
+                                    box.P2.X // Third corner
+                                    box.P2.Y
+                                    box.P1.X // Fourth corner
+                                    box.P2.Y)
+                           SVGAttr.Stroke "blue"
+                           SVGAttr.Fill "lightblue"
+                           SVGAttr.Opacity 0.3 ] []))
 
         /// We use all above functions to construct all line and curve segments.
         g [ OnMouseUp(fun _ ->
