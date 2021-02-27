@@ -206,7 +206,7 @@ let createBoundingBoxes (corners: XYPos list): WireBoundingBox list =
            [ { Box =
                    { P1 = posDiff s1 diff
                      P2 = posAdd s2 diff }
-               Prev = s2 } ]
+               Prev = secondCorner } ]
     |> List.rev
 
 type WireRenderProps =
@@ -306,7 +306,7 @@ let singleWireView =
                           SVGAttr.Fill props.WireColour ] [
                        widthText
                    ] ]
-             // @ boxes))
+             @ boxes
              ))
 
 let view (model: Model) (dispatch: Msg -> unit) =
@@ -342,7 +342,7 @@ let view (model: Model) (dispatch: Msg -> unit) =
 
 
 
-let createWire (sourcePort: Port) (targetPort: Port): Wire =
+let createWire (sourcePort: Port) (targetPort: Port) : Wire =
     let corners =
         findCorners sourcePort.Pos targetPort.Pos sourcePort.ParentHeight targetPort.ParentHeight
 
