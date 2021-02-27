@@ -160,6 +160,14 @@ let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
           { X = xCorner2; Y = y2 } // End of vertical 3
           { X = x2; Y = y2 } ]
 
+let chooseCorners firstCorner secondCorner =
+    let s1 = if (firstCorner.X < secondCorner.X && firstCorner.Y = secondCorner.Y)
+                || (firstCorner.X = secondCorner.X && firstCorner.Y < secondCorner.Y)
+             then firstCorner
+             else secondCorner
+    let s2 = if s1 = firstCorner then secondCorner else firstCorner
+    s1, s2
+
 /// These boxes are in the same order as the corners, which makes it easy to pair them up with which line segment
 /// lies within them.
 /// The lines can be in any orientation. The top left corner is defined as the top left of
@@ -172,24 +180,19 @@ let createBoundingBoxes (corners: XYPos list): WireBoundingBox list =
     /// Assuming there will always be at least three corners on any given wire. Remove the first and last
     /// corners because we do not want the end segments to be draggable. rest may be an empty list.
     let (firstCorner :: secondCorner :: rest) = corners.[1..corners.Length - 2]
-
+    
+    // I have to check this condition
+    let s1, s2 = chooseCorners firstCorner secondCorner
+    
     /// This will work even if rest is empty, as we have a start state.
     rest
     |> List.fold (fun boxes currentCorner ->
         (let previousBox = List.head boxes
          let p1 = previousBox.Prev
          let p2 = currentCorner
-         // printf "p1: %A, p2: %A" p1 p2
          /// Problem: If the corners are switched, P2 of the previous box is actually P1. So the next box is created
          /// as a huge rectangle. To fix this, I made a new field in WireBoundingBox which keeps the previous corner.
-         let topLeft =
-             if (p1.X < p2.X && p1.Y = p2.Y)
-                || (p1.X = p2.X && p1.Y < p2.Y) then
-                 p1
-             else
-                 p2
-
-         let bottomRight = if topLeft = p1 then p2 else p1
+         let topLeft, bottomRight = chooseCorners p1 p2
 
          { Box =
                { P1 = posDiff topLeft diff
@@ -201,9 +204,9 @@ let createBoundingBoxes (corners: XYPos list): WireBoundingBox list =
            /// I can define the first box like this since it will always emanate from an output, meaning that it will
            /// always face to the right. I will have to change this when we add different symbol orientations.
            [ { Box =
-                   { P1 = posDiff firstCorner diff
-                     P2 = posAdd secondCorner diff }
-               Prev = secondCorner } ]
+                   { P1 = posDiff s1 diff
+                     P2 = posAdd s2 diff }
+               Prev = s2 } ]
     |> List.rev
 
 type WireRenderProps =
@@ -256,7 +259,7 @@ let singleWireView =
                                     box.Box.P2.Y)
                            SVGAttr.Stroke "blue"
                            SVGAttr.Fill "lightblue"
-                           SVGAttr.Opacity 0.3 ] []))
+                           SVGAttr.Opacity 0.5 ] []))
 
         let drawCorners =
             match corners.Length with
