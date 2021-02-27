@@ -306,7 +306,8 @@ let singleWireView =
                           SVGAttr.Fill props.WireColour ] [
                        widthText
                    ] ]
-             @ boxes))
+             // @ boxes))
+             ))
 
 let view (model: Model) (dispatch: Msg -> unit) =
 

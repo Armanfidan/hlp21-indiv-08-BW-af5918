@@ -89,5 +89,5 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
 
 let init () =
     // Don't forget to change this back to 400 before demo!
-    let model, cmds = (BusWire.init 1) ()
+    let model, cmds = (BusWire.init 400) ()
     { Wire = model }, Cmd.map Wire cmds
