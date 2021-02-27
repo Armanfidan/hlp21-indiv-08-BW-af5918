@@ -433,19 +433,35 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                       if wireId <> wire.Id then
                           wire
                       else
-                          let corners = findCorners source.Pos target.Pos source.ParentHeight target.ParentHeight
+                          let corners =
+                              if source.IsDragging || target.IsDragging
+                              then findCorners source.Pos target.Pos source.ParentHeight target.ParentHeight
+                              else wire.Corners
+
+                          let boundingBoxes = createBoundingBoxes corners
+
+                          let i =
+                              findClickedSegment
+                                  pagePos
+                                  { wire with
+                                        Corners = corners
+                                        BoundingBoxes = boundingBoxes }
+                          // if i <> 0 && i <> boundingBoxes.Length - 1
+                          // then
                           { wire with
                                 LastDragPos = pagePos
                                 IsDragging = true
                                 Corners = corners
-                                BoundingBoxes = createBoundingBoxes corners })
+                                DraggedCornerIndex = i
+                                BoundingBoxes = boundingBoxes }
+                      // else wire
+                      )
               Symbols =
                   model.Symbols
                   |> List.map (fun symbol ->
                       let wire =
                           model.Wires
-                          |> List.filter (fun wire -> wireId = wire.Id)
-                          |> List.head
+                          |> List.find (fun wire -> wireId = wire.Id)
 
                       let sp = findPort model.Symbols wire.SourcePort
                       let tp = findPort model.Symbols wire.TargetPort
