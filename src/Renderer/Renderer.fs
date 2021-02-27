@@ -74,7 +74,7 @@
         match msg with
         | Wire (BusWire.Msg.MouseMsg busWireMouseMsg) -> sprintf "BusWireMsg:%A" busWireMouseMsg.Op
         | KeyPress key -> sprintf "%A" key
-        | Wire (BusWire.Msg.Symbol (Symbol.Msg.MouseMsg symMouseMsg)) -> sprintf "SymbolMsg:%A"  symMouseMsg.Op
+        | Wire (BusWire.Msg.UpdateSymbol (Symbol.Msg.MouseMsg symMouseMsg)) -> sprintf "SymbolMsg:%A"  symMouseMsg.Op
         | x -> sprintf "Other:%A" x
 
     let traceFn (msg:Msg) model = printfn "Msg=%A\n\n" (printMsg msg)
