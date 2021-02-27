@@ -86,7 +86,9 @@ let createNewSymbol (input: XYPos * float) =
 
 let init () =
     [ ({ X = 100.; Y = 100. }, 100.)
-      ({ X = 500.; Y = 300. }, 100.) ]
+      ({ X = 500.; Y = 300. }, 100.)
+      ({ X = 200.; Y = 500. }, 150.)
+      ({ X = 500.; Y = 600. }, 80.) ]
     |> List.map createNewSymbol,
     Cmd.none
 
