@@ -528,18 +528,3 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                   |> List.map (fun wire -> if wireId <> wire.Id then wire else { wire with IsDragging = false }) },
         Cmd.none
     | MouseMsg mMsg -> model, Cmd.ofMsg (Symbol(Symbol.MouseMsg mMsg))
-
-//---------------Other interface functions--------------------//
-
-/// Given a point on the canvas, returns the wire ID of a wire within a few pixels
-/// or None if no such. Where there are two close wires the nearest is taken. Used
-/// to determine which wire (if any) to select on a mouse click
-let wireToSelectOpt (wModel: Model) (pos: XYPos): CommonTypes.ConnectionId option = failwith "Not implemented"
-
-//----------------------interface to Issie-----------------------//
-let extractWire (wModel: Model) (sId: ComponentId): Component = failwithf "Not implemented"
-
-let extractWires (wModel: Model): Component list = failwithf "Not implemented"
-
-/// Update the symbol with matching componentId to comp, or add a new symbol based on comp.
-let updateSymbolModelWithComponent (symModel: Model) (comp: Component) = failwithf "Not Implemented"
