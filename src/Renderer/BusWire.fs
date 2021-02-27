@@ -79,7 +79,7 @@ let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
     // Heights of parent symbols of the source and target ports, adjusted manually
     let ha1 = h1 / 2. + 20.
 
-    let ha2 = h1 / 2. + 20.
+    let ha2 = h2 / 2. + 20.
 
     // Minimum distance to go straight from ports
     let xMin = 20.
