@@ -32,7 +32,6 @@ module CommonTypes
         IsHighlighted: bool
         IsDragging: bool
         ParentHeight: float
-        BoundingBox: BoundingBox
     }
 
     /// Name identified the LoadedComponent used.
