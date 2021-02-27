@@ -16,6 +16,7 @@ open Helpers
 //------------------------------------------------------------------------//
 
 type BoundingBox = { P1: XYPos; P2: XYPos }
+
 type WireBoundingBox = { Box: BoundingBox; Prev: XYPos }
 
 // Add bounding boxes to each segment of the wire.
@@ -135,15 +136,29 @@ let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
     let yMidAdaptive2 =
         if yDiff >= ha1 + ha2 then yMid else yCorner2
 
-    // Corner list
-    [ { X = x1; Y = y1 }
-      { X = xCorner1; Y = y1 }
-      { X = xCorner1; Y = yMidAdaptive1 }
-      { X = xMid; Y = yMidAdaptive1 }
-      { X = xMid; Y = yMidAdaptive2 }
-      { X = xCorner2; Y = yMidAdaptive2 }
-      { X = xCorner2; Y = y2 }
-      { X = x2; Y = y2 } ]
+    /// Corner list, number of corners may vary depending on shape of wire.
+    /// I will need to adjust to this when rendering the wire.
+    if xCorner1 = xCorner2 then
+        [ { X = x1; Y = y1 }
+          { X = xMid; Y = y1 }
+          { X = xMid; Y = y2 }
+          { X = x2; Y = y2 } ]
+    elif yMidAdaptive1 = yMidAdaptive2 then
+        [ { X = x1; Y = y1 } // Beginning of extension 1 (Source)
+          { X = xCorner1; Y = y1 } // End of extension 1
+          { X = xCorner1; Y = yMidAdaptive1 } // End of vertical 1
+          { X = xCorner2; Y = yMidAdaptive2 } // End of horizontal
+          { X = xCorner2; Y = y2 } // End of vertical 2
+          { X = x2; Y = y2 } ]
+    else
+        [ { X = x1; Y = y1 } // Beginning of extension 1 (Source)
+          { X = xCorner1; Y = y1 } // End of extension 1
+          { X = xCorner1; Y = yMidAdaptive1 } // End of vertical 1
+          { X = xMid; Y = yMidAdaptive1 } // End of horizontal 1
+          { X = xMid; Y = yMidAdaptive2 } // End of vertical 2
+          { X = xCorner2; Y = yMidAdaptive2 } // End of horizontal 2
+          { X = xCorner2; Y = y2 } // End of vertical 3
+          { X = x2; Y = y2 } ]
 
 /// These boxes are in the same order as the corners, which makes it easy to pair them up with which line segment
 /// lies within them.
@@ -155,9 +170,10 @@ let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
 let createBoundingBoxes (corners: XYPos list): WireBoundingBox list =
     let diff = { X = 5.; Y = 5. }
     /// Assuming there will always be at least three corners on any given wire. Remove the first and last
-    /// corners because we do not want the end segments to be draggable
-    let (firstCorner :: secondCorner :: rest) = corners.[ 1 .. corners.Length - 2 ]
+    /// corners because we do not want the end segments to be draggable. rest may be an empty list.
+    let (firstCorner :: secondCorner :: rest) = corners.[1..corners.Length - 2]
 
+    /// This will work even if rest is empty, as we have a start state.
     rest
     |> List.fold (fun boxes currentCorner ->
         (let previousBox = List.head boxes
@@ -176,16 +192,17 @@ let createBoundingBoxes (corners: XYPos list): WireBoundingBox list =
          let bottomRight = if topLeft = p1 then p2 else p1
 
          { Box =
-              { P1 = posDiff topLeft diff
-                P2 = posAdd bottomRight diff }
+               { P1 = posDiff topLeft diff
+                 P2 = posAdd bottomRight diff }
            Prev = p2 }
          :: boxes
 
         ))
            /// I can define the first box like this since it will always emanate from an output, meaning that it will
            /// always face to the right. I will have to change this when we add different symbol orientations.
-           [ { Box = { P1 = posDiff firstCorner diff
-                       P2 = posAdd secondCorner diff }
+           [ { Box =
+                   { P1 = posDiff firstCorner diff
+                     P2 = posAdd secondCorner diff }
                Prev = secondCorner } ]
     |> List.rev
 
@@ -223,55 +240,70 @@ let singleWireView =
         let widthText =
             if props.WireWidth = 0 then str "Error: widths do not match" else str <| sprintf "%d" props.WireWidth
 
-        let boxes : ReactElement list =
+        let boxes: ReactElement list =
             createBoundingBoxes corners
             |> List.map (fun box ->
                 (polygon [ SVGAttr.Points
                                (sprintf
                                    "%0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f"
-                                    box.Box.P1.X // First corner
+                                    box.Box.P1.X  // First corner
                                     box.Box.P1.Y
-                                    box.Box.P2.X // Second corner
+                                    box.Box.P2.X  // Second corner
                                     box.Box.P1.Y
-                                    box.Box.P2.X // Third corner
+                                    box.Box.P2.X  // Third corner
                                     box.Box.P2.Y
-                                    box.Box.P1.X // Fourth corner
+                                    box.Box.P1.X  // Fourth corner
                                     box.Box.P2.Y)
                            SVGAttr.Stroke "blue"
                            SVGAttr.Fill "lightblue"
                            SVGAttr.Opacity 0.3 ] []))
 
+        let drawCorners =
+            match corners.Length with
+            | 4 ->
+                sprintf
+                    "%0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f" corners.[0].X corners.[0].Y corners.[1].X
+                    corners.[1].Y corners.[2].X corners.[2].Y corners.[3].X corners.[3].Y
+            | 6 ->
+                sprintf "%0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f
+                                            %0.2f, %0.2f %0.2f, %0.2f" corners.[0].X corners.[0].Y corners.[1].X
+                    corners.[1].Y corners.[2].X corners.[2].Y corners.[3].X corners.[3].Y corners.[4].X corners.[4].Y
+                    corners.[5].X corners.[5].Y
+            | 8 ->
+                sprintf "%0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f
+                                            %0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f " corners.[0].X
+                    corners.[0].Y corners.[1].X corners.[1].Y corners.[2].X corners.[2].Y corners.[3].X corners.[3].Y
+                    corners.[4].X corners.[4].Y corners.[5].X corners.[5].Y corners.[6].X corners.[6].Y corners.[7].X
+                    corners.[7].Y
+            | _ -> failwithf "Invalid corners."
+
         /// We use all above functions to construct all line and curve segments.
-        g [ OnMouseUp(fun _ ->
+        g
+            [ OnMouseUp(fun _ ->
                 document.removeEventListener ("mousemove", handleMouseMove.current)
                 EndDraggingWire props.Wire.Id |> props.Dispatch)
-            OnMouseDown(fun ev ->
-                StartDraggingWire(props.Wire.Id, posOf ev.pageX ev.pageY)
-                |> props.Dispatch
+              OnMouseDown(fun ev ->
+                  StartDraggingWire(props.Wire.Id, posOf ev.pageX ev.pageY)
+                  |> props.Dispatch
 
-                document.addEventListener ("mousemove", handleMouseMove.current)) ] ([
-            // --------------------Port extensions-------------------------
-            polyline [ SVGAttr.Points
-                           (sprintf "%0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f
-                                            %0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f %0.2f, %0.2f " corners.[0].X
-                                corners.[0].Y corners.[1].X corners.[1].Y corners.[2].X corners.[2].Y corners.[3].X
-                                corners.[3].Y corners.[4].X corners.[4].Y corners.[5].X corners.[5].Y corners.[6].X
-                                corners.[6].Y corners.[7].X corners.[7].Y)
-                       SVGAttr.Stroke props.WireColour
-                       SVGAttr.StrokeWidth
-                           (str
-                               (sprintf "%d"
-                                <| if props.WireWidth = 0 then 3 else props.WireWidth))
-                       SVGAttr.FillOpacity "0" ] []
-            if props.WireWidth <> 1 then
-                text [ SVGAttr.X(corners.[0].X + 6.)
-                       SVGAttr.Y(corners.[0].Y - 6.)
-                       SVGAttr.Stroke props.WireColour
-                       SVGAttr.Fill props.WireColour ] [
-                    widthText
-                ]    
-        ] @ boxes)
-    )
+                  document.addEventListener ("mousemove", handleMouseMove.current)) ]
+            ([
+               // --------------------Port extensions-------------------------
+               polyline [ SVGAttr.Points drawCorners
+                          SVGAttr.Stroke props.WireColour
+                          SVGAttr.StrokeWidth
+                              (str
+                                  (sprintf "%d"
+                                   <| if props.WireWidth = 0 then 3 else props.WireWidth))
+                          SVGAttr.FillOpacity "0" ] []
+               if props.WireWidth <> 1 then
+                   text [ SVGAttr.X(corners.[0].X + 6.)
+                          SVGAttr.Y(corners.[0].Y - 6.)
+                          SVGAttr.Stroke props.WireColour
+                          SVGAttr.Fill props.WireColour ] [
+                       widthText
+                   ] ]
+             @ boxes))
 
 let view (model: Model) (dispatch: Msg -> unit) =
 
@@ -384,8 +416,9 @@ let tryFindClickedSegment (pagePos: XYPos) (wire: Wire): int option =
         wire.BoundingBoxes
         |> List.mapi (fun index boundingBox -> (index, boundingBox))
         |> List.tryFind (fun (_, boundingBox) -> boxContainsPoint boundingBox pagePos)
+
     match segmentIndex with
-    | Some segment -> Some (fst segment + 1)
+    | Some segment -> Some(fst segment + 1)
     | None -> None
 
 
@@ -436,7 +469,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                                         Corners = corners
                                         BoundingBoxes = boundingBoxes }
                           // printf "Dragged corner index: %d, Corners: %A, %A" i corners.[i] corners.[i + 1]
-                          
+
                           match i with
                           | Some i ->
                               { wire with
@@ -449,8 +482,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                               { wire with
                                     LastDragPos = pagePos
                                     Corners = corners
-                                    BoundingBoxes = boundingBoxes }
-                      )
+                                    BoundingBoxes = boundingBoxes })
               Symbols =
                   model.Symbols
                   |> List.map (fun symbol ->
