@@ -54,6 +54,7 @@ let posOf x y = { X = x; Y = y }
 /// Symbol creation: a unique Id is given to the symbol, found from uuid.
 /// The parameters of this function must be enough to specify the symbol completely
 /// in its initial form. This is called by the AddSymbol message and need not be exposed.
+/// Set IsDragging (for ports) to true to adjust wire colours
 let createNewSymbol (input: XYPos * float) =
     let pos, height = input
     let hostId = ComponentId(uuid ())
@@ -73,7 +74,7 @@ let createNewSymbol (input: XYPos * float) =
               Width = 5
               IsHighlighted = false
               ParentHeight = height
-              IsDragging = false }
+              IsDragging = true }
             { Id = ComponentId(uuid ())
               HostId = hostId
               PortType = PortType.Output
@@ -81,7 +82,7 @@ let createNewSymbol (input: XYPos * float) =
               Width = 5
               IsHighlighted = false
               ParentHeight = height
-              IsDragging = false } ] }
+              IsDragging = true } ] }
 
 
 let init () =
