@@ -422,8 +422,6 @@ let tryFindClickedWire (pagePos: XYPos) (model: Model): Wire option =
 
 /// Given a wire, tries to find and return the index of the segment that was clicked. If there are none, returns None.
 let tryFindClickedSegment (pagePos: XYPos) (wire: Wire): int option =
-    // printf "Finding clicked segment. Bounding boxes: %A" wire.BoundingBoxes
-    // printf "Mouse position: %A" pagePos
     let segmentIndex =
         wire.BoundingBoxes
         |> List.mapi (fun index boundingBox -> (index, boundingBox))
