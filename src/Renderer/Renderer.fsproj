@@ -24,6 +24,9 @@
     <Compile Include="Sheet.fs" />
     <Compile Include="Renderer.fs" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="RoundCorners.js" />
+  </ItemGroup>
   <!-- Dependencies -->
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
