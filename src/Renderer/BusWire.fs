@@ -30,7 +30,8 @@ type Wire =
       BoundingBoxes: WireBoundingBox list
       Corners: XYPos list
       DraggedCornerIndex: int
-      LastDragPos: XYPos }
+      LastDragPos: XYPos
+      IsHighlighted: bool }
 
 type Model =
     { Symbols: Symbol.Model
@@ -319,16 +320,21 @@ let view (model: Model) (dispatch: Msg -> unit) =
 
             let source = findPort model.Symbols wire.SourcePort
             let target = findPort model.Symbols wire.TargetPort
+            
+            let wireColour =
+                if wire.IsError then Red.Text()
+                elif wire.IsHighlighted then Yellow.Text()
+                else model.Colour.Text()
 
             let width =
                 if source.Width = target.Width then source.Width else 0
-
+            
             let props =
                 { key = wire.Id
                   Wire = wire
                   Source = source
                   Target = target
-                  WireColour = if not wire.IsError then model.Colour.Text() else Red.Text()
+                  WireColour = wireColour
                   WireWidth = width
                   Dispatch = dispatch }
 
