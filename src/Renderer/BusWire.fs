@@ -64,6 +64,7 @@ let wireFromPort (model: Model) (portId: ComponentId): Wire =
         || wire.TargetPort = portId)
     |> List.head
 
+/// Automatically finds corners given source and target port positions and symbol heights
 let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
     // Midpoints
     let xMid = (targetPort.X + sourcePort.X) / 2.0
@@ -161,6 +162,7 @@ let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
           { X = xCorner2; Y = y2 } // End of vertical 3
           { X = x2; Y = y2 } ]
 
+/// Chooses top left and bottom right corners out of the given two, for bounding boxes
 let chooseCorners firstCorner secondCorner =
     let s1 = if (firstCorner.X < secondCorner.X && firstCorner.Y = secondCorner.Y)
                 || (firstCorner.X = secondCorner.X && firstCorner.Y < secondCorner.Y)
@@ -219,9 +221,6 @@ type WireRenderProps =
       WireWidth: int
       Dispatch: Dispatch<Msg> }
 
-/// react virtual DOM SVG for one wire
-/// In general one wire will be multiple (right-angled) segments.
-
 let singleWireView =
     FunctionComponent.Of(fun (props: WireRenderProps) ->
         // This should be the wire with changing corners
@@ -230,9 +229,6 @@ let singleWireView =
             if props.Source.IsDragging || props.Target.IsDragging
             then findCorners props.Source.Pos props.Target.Pos props.Source.ParentHeight props.Target.ParentHeight
             else props.Wire.Corners
-        //
-        // // printf "Render: %A" props.Wire.Corners
-        // // printf "Render corners: %A" corners
 
         let handleMouseMove =
             Hooks.useRef (fun (ev: Types.Event) ->
@@ -244,6 +240,7 @@ let singleWireView =
         let widthText =
             if props.WireWidth = 0 then str "Error: widths do not match" else str <| sprintf "%d" props.WireWidth
 
+        // Use to draw bounding boxes for debugging purposes
         let boxes: ReactElement list =
             createBoundingBoxes corners
             |> List.map (fun box ->
@@ -261,7 +258,7 @@ let singleWireView =
                            SVGAttr.Stroke "blue"
                            SVGAttr.Fill "lightblue"
                            SVGAttr.Opacity 0.5 ] []))
-
+            
         let drawCorners =
             match corners.Length with
             | 4 ->
@@ -280,35 +277,42 @@ let singleWireView =
                     corners.[4].X corners.[4].Y corners.[5].X corners.[5].Y corners.[6].X corners.[6].Y corners.[7].X
                     corners.[7].Y
             | _ -> failwithf "Invalid corners."
-
+        
         /// We use all above functions to construct all line and curve segments.
         g
-            [ OnMouseUp(fun _ ->
-                document.removeEventListener ("mousemove", handleMouseMove.current)
-                EndDraggingWire props.Wire.Id |> props.Dispatch)
-              OnMouseDown(fun ev ->
-                  StartDraggingWire(props.Wire.Id, posOf ev.pageX ev.pageY)
-                  |> props.Dispatch
+            [
+                OnMouseUp(fun _ ->
+                    document.removeEventListener ("mousemove", handleMouseMove.current)
+                    EndDraggingWire props.Wire.Id |> props.Dispatch)
+                OnMouseDown(fun ev ->
+                    StartDraggingWire(props.Wire.Id, posOf ev.pageX ev.pageY)
+                    |> props.Dispatch
 
-                  document.addEventListener ("mousemove", handleMouseMove.current)) ]
+                    document.addEventListener ("mousemove", handleMouseMove.current)) ]
             ([
-               // --------------------Port extensions-------------------------
-               polyline [ SVGAttr.Points drawCorners
-                          SVGAttr.Stroke props.WireColour
-                          SVGAttr.StrokeWidth
-                              (str
-                                  (sprintf "%d"
-                                   <| if props.WireWidth = 0 then 3 else props.WireWidth))
-                          SVGAttr.FillOpacity "0" ] []
-               if props.WireWidth <> 1 then
-                   text [ SVGAttr.X(corners.[0].X + 6.)
-                          SVGAttr.Y(corners.[0].Y - 6.)
-                          SVGAttr.Stroke props.WireColour
-                          SVGAttr.Fill props.WireColour ] [
-                       widthText
-                   ] ]
-             @ boxes
-             ))
+                polyline [
+                    SVGAttr.Points drawCorners
+                    SVGAttr.Stroke props.WireColour
+                    SVGAttr.StrokeWidth
+                      (str
+                          (sprintf "%d"
+                           <| if props.WireWidth = 0 then 3 else props.WireWidth))
+                    SVGAttr.FillOpacity "0"
+                    // SVGAttr.Custom ("stroke-linejoin", "round")
+                     ] []
+                if props.WireWidth <> 1 then
+                    text [
+                        SVGAttr.X(corners.[0].X + 6.)
+                        SVGAttr.Y(corners.[0].Y - 6.)
+                        SVGAttr.Stroke props.WireColour
+                        SVGAttr.Fill props.WireColour ] [
+                        widthText
+                    ] 
+             ]
+             // @ boxes // Uncomment to display bounding boxes, for debugging purposes
+            )
+            
+            )
 
 let view (model: Model) (dispatch: Msg -> unit) =
 
@@ -361,7 +365,8 @@ let createWire (sourcePort: Port) (targetPort: Port) : Wire =
       BoundingBoxes = createBoundingBoxes corners
       Corners = corners
       DraggedCornerIndex = 1
-      LastDragPos = { X = 0.; Y = 0. } }
+      LastDragPos = { X = 0.; Y = 0. }
+      IsHighlighted = false}
 
 let init n () =
     let symbols, cmd = Symbol.init ()
@@ -394,11 +399,7 @@ let init n () =
           Colour = Red },
         Cmd.none)
 
-/// The lines can be in any orientation. The top left corner is defined as the top left of
-/// the former corner, and the bottom right corner is the bottom right of the latter corner.
-/// However, the lines are sometimes inverted (former corner is on the right and the latter
-/// is on the left). This means that I need to be more careful when either creating the boxes
-/// or when checking that a point is within them.
+/// Assuming that boundingBox.P1 is always top left and boundingBox.P2 is always bottom right.
 let boxContainsPoint (boundingBox: WireBoundingBox) (pagePos: XYPos): bool =
     let p1 = boundingBox.Box.P1
     let p2 = boundingBox.Box.P2
@@ -419,6 +420,7 @@ let tryFindClickedWire (pagePos: XYPos) (model: Model): Wire option =
 
         foundBoxes <> None)
 
+/// Given a wire, tries to find and return the index of the segment that was clicked. If there are none, returns None.
 let tryFindClickedSegment (pagePos: XYPos) (wire: Wire): int option =
     // printf "Finding clicked segment. Bounding boxes: %A" wire.BoundingBoxes
     // printf "Mouse position: %A" pagePos
@@ -432,11 +434,13 @@ let tryFindClickedSegment (pagePos: XYPos) (wire: Wire): int option =
     | None -> None
 
 
-type Orientation =
+/// For wire segments, to choose direction to move
+type SegmentOrientation =
     | Vertical
     | Horizontal
 
-let segmentOrientation (corners: XYPos list) (index: int): Orientation =
+/// Determine orientation of given segment
+let segmentOrientation (corners: XYPos list) (index: int): SegmentOrientation =
     let corner1 = corners.[index]
     let corner2 = corners.[index + 1]
 
@@ -456,61 +460,60 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
     | SetColour c -> { model with Colour = c }, Cmd.none
     | StartDraggingWire (wireId, pagePos) ->
         { model with
-              Wires =
-                  model.Wires
-                  |> List.map (fun wire ->
-                      let source = findPort model.Symbols wire.SourcePort
-                      let target = findPort model.Symbols wire.TargetPort
+            Wires =
+                model.Wires
+                |> List.map (fun wire ->
+                let source = findPort model.Symbols wire.SourcePort
+                let target = findPort model.Symbols wire.TargetPort
 
-                      let corners =
-                              if source.IsDragging || target.IsDragging
-                              then findCorners source.Pos target.Pos source.ParentHeight target.ParentHeight
-                              else wire.Corners
+                let corners =
+                  if source.IsDragging || target.IsDragging
+                  then findCorners source.Pos target.Pos source.ParentHeight target.ParentHeight
+                  else wire.Corners
 
-                      let boundingBoxes = createBoundingBoxes corners
-                      
-                      if wireId <> wire.Id then
-                          { wire with
-                                    LastDragPos = pagePos
-                                    Corners = corners
-                                    BoundingBoxes = boundingBoxes }
-                      else
-                          let i =
-                              tryFindClickedSegment
-                                  pagePos
-                                  { wire with
-                                        Corners = corners
-                                        BoundingBoxes = boundingBoxes }
-                          // printf "Dragged corner index: %d, Corners: %A, %A" i corners.[i] corners.[i + 1]
+                let boundingBoxes = createBoundingBoxes corners
 
-                          match i with
-                          | Some i ->
-                              { wire with
-                                    LastDragPos = pagePos
-                                    IsDragging = true
-                                    Corners = corners
-                                    DraggedCornerIndex = i
-                                    BoundingBoxes = boundingBoxes }
-                          | None ->
-                              { wire with
-                                    LastDragPos = pagePos
-                                    Corners = corners
-                                    BoundingBoxes = boundingBoxes })
-              Symbols =
-                  model.Symbols
-                  |> List.map (fun symbol ->
-                      let wire =
-                          model.Wires
-                          |> List.find (fun wire -> wireId = wire.Id)
+                if wireId <> wire.Id then
+                    { wire with
+                        LastDragPos = pagePos
+                        Corners = corners
+                        BoundingBoxes = boundingBoxes }
+                else
+                let i =
+                    tryFindClickedSegment
+                        pagePos
+                        { wire with
+                            Corners = corners
+                            BoundingBoxes = boundingBoxes }
 
-                      let sp = findPort model.Symbols wire.SourcePort
-                      let tp = findPort model.Symbols wire.TargetPort
+                match i with
+                | Some i ->
+                    { wire with
+                        LastDragPos = pagePos
+                        IsDragging = true
+                        Corners = corners
+                        DraggedCornerIndex = i
+                        BoundingBoxes = boundingBoxes }
+                | None ->
+                    { wire with
+                        LastDragPos = pagePos
+                        Corners = corners
+                        BoundingBoxes = boundingBoxes })
+            Symbols =
+                model.Symbols
+                |> List.map (fun symbol ->
+                    let wire =
+                        model.Wires
+                        |> List.find (fun wire -> wireId = wire.Id)
 
-                      if (symbol.Id <> sp.HostId && symbol.Id <> tp.HostId) then
-                          symbol
-                      else
-                          { symbol with
-                                Ports = List.map (fun port -> { port with IsDragging = false }) symbol.Ports }) },
+                    let sp = findPort model.Symbols wire.SourcePort
+                    let tp = findPort model.Symbols wire.TargetPort
+
+                    if (symbol.Id <> sp.HostId && symbol.Id <> tp.HostId) then
+                        symbol
+                    else
+                        { symbol with
+                            Ports = List.map (fun port -> { port with IsDragging = false }) symbol.Ports }) },
         Cmd.none
 
     | DraggingWire (wireId, pagePos) ->
