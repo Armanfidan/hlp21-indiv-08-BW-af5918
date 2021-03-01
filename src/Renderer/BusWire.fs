@@ -585,4 +585,22 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                 model.Wires
                 |> List.map (fun wire -> if wireId <> wire.Id then wire else { wire with IsDragging = false }) },
         Cmd.none
-    | MouseMsg mMsg -> model, Cmd.ofMsg (UpdateSymbol(Symbol.MouseMsg mMsg))
+    | SelectWires wireIds ->
+        { model with
+            Wires =
+                model.Wires
+                |> List.map (fun wire -> if List.contains wire.Id wireIds then { wire with IsHighlighted = true } else wire) },
+        Cmd.none
+    | DeselectWires wireIds ->
+        { model with
+            Wires =
+                model.Wires
+                |> List.map (fun wire -> if List.contains wire.Id wireIds then { wire with IsHighlighted = false } else wire) },
+        Cmd.none
+    | DeleteWires wireIds ->
+        { model with
+            Wires =
+                model.Wires
+                |> List.filter (fun wire -> not <| List.contains wire.Id wireIds) },
+        Cmd.none
+    | MouseMsg mMsg -> model, Cmd.ofMsg (Symbol(Symbol.MouseMsg mMsg))
