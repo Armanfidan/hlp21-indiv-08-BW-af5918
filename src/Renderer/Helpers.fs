@@ -1,5 +1,6 @@
 ﻿module Helpers
 
+open System
 open Fable.Core.JsInterop
 
 //-------------------------------------------------------------------------//
@@ -8,6 +9,8 @@ open Fable.Core.JsInterop
 
 /// position on SVG canvas
 type XYPos = { X: float; Y: float }
+
+type BoundingBox = { P1: XYPos; P2: XYPos }
 
 
 type MouseOp =
@@ -21,6 +24,8 @@ type MouseOp =
     | Drag
 
 type MouseT = { Pos: XYPos; Op: MouseOp }
+
+type KeyOp = KeyDown | KeyUp
 
 //--------------------------------------------------------------------------//
 //-----------------------------Helpers--------------------------------------//
