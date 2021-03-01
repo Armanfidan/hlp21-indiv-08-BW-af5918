@@ -45,7 +45,7 @@ type Msg =
     /// coords not adjusted for top-level zoom
     | Dragging of sId: CommonTypes.ComponentId * pagePos: XYPos
     | EndDragging of sId: CommonTypes.ComponentId
-    | AddComponent of XYPos * float // used by demo code to add a circle
+    | AddComponent of XYPos * float * float * int * int
     | DeleteSymbol of sId: CommonTypes.ComponentId
     | UpdateSymbolModelWithComponent of CommonTypes.Component
 
@@ -65,48 +65,48 @@ let posOf x y = { X = x; Y = y }
 /// The parameters of this function must be enough to specify the symbol completely
 /// in its initial form. This is called by the AddSymbol message and need not be exposed.
 /// Set IsDragging (for ports) to true to adjust wire colours
-let createNewSymbol (input: XYPos * float) =
-    let pos, height = input
+let createNewSymbol (input: XYPos * float * float * int * int) =
+    let pos, height, width, inputWidth, outputWidth = input
     let hostId = ComponentId(uuid ())
 
     { Pos = pos
       LastDragPos = { X = 0.; Y = 0. } // initial value can always be this
       IsDragging = false // initial value can always be this
       Id = hostId // create a unique id for this symbol
-      Width = height
+      Width = width
       Height = height
       Ports =
           [ // Creates one input and one output port. For demo only.
-            { Id = ComponentId(uuid ())
+            { Id = PortId(uuid ())
               HostId = hostId
               PortType = PortType.Input
-              Pos = fst input
-              Width = 5
+              Pos = pos
+              Width = inputWidth
               IsHighlighted = false
               ParentHeight = height
               IsDragging = true }
-            { Id = ComponentId(uuid ())
+            { Id = PortId(uuid ())
               HostId = hostId
               PortType = PortType.Output
-              Pos = { fst input with X = pos.X + height }
-              Width = 5
+              Pos = { pos with X = pos.X + width }
+              Width = outputWidth
               IsHighlighted = false
               ParentHeight = height
               IsDragging = true } ] }
 
 
 let init () =
-    [ ({ X = 100.; Y = 100. }, 100.)
-      ({ X = 500.; Y = 300. }, 100.)
-      ({ X = 200.; Y = 500. }, 150.)
-      ({ X = 500.; Y = 600. }, 80.) ]
+    [ ({ X = 100.; Y = 100. }, 100., 50., 1, 1)
+      ({ X = 500.; Y = 300. }, 100., 50., 1, 1)
+      ({ X = 200.; Y = 500. }, 150., 50., 1, 1)
+      ({ X = 500.; Y = 600. }, 80., 50., 1, 1) ]
     |> List.map createNewSymbol,
     Cmd.none
 
 /// update function which displays symbols
 let update (msg: Msg) (model: Model): Model * Cmd<'a> =
     match msg with
-    | AddComponent (pos, height) -> createNewSymbol (pos, height) :: model, Cmd.none
+    | AddComponent (pos, height, width, iw, ow) -> createNewSymbol (pos, height, width, iw, ow) :: model, Cmd.none
     | DeleteSymbol sId -> List.filter (fun sym -> sym.Id <> sId) model, Cmd.none
     | StartDragging (sId, pagePos) ->
         model
