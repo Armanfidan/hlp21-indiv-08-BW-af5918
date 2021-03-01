@@ -114,46 +114,90 @@ let init () =
 /// update function which displays symbols
 let update (msg: Msg) (model: Model): Model * Cmd<'a> =
     match msg with
-    | AddComponent (pos, height, width, iw, ow) -> createNewSymbol (pos, height, width, iw, ow) :: model, Cmd.none
-    | DeleteSymbol sId -> List.filter (fun sym -> sym.Id <> sId) model, Cmd.none
-    | StartDragging (sId, pagePos) ->
+    | AddSymbol (_, pagePos, _) -> (createDummySymbol pagePos) :: model, Cmd.none
+    | DeleteSymbols sIds ->
+        model
+        |> List.filter (fun sym -> not (List.contains sym.Id sIds)),
+        Cmd.none
+    | SelectSymbols sIds -> // Author: Lukas Baliunas
+        model
+        |> List.map (fun sym -> if List.contains sym.Id sIds then { sym with IsHighlighted = true } else sym),
+        Cmd.none
+    | DeselectSymbols sIds -> // Author: Lukas Baliunas
+        model
+        |> List.map (fun sym -> if List.contains sym.Id sIds then { sym with IsHighlighted = false } else sym),
+        Cmd.none
+    | StartDragging (sIds, pagePos) ->
         model
         |> List.map (fun sym ->
-            if sId <> sym.Id then
-                sym
-            else
+            if List.contains sym.Id sIds then
                 { sym with
                       LastDragPos = pagePos
-                      IsDragging = true
-                      Ports = List.map (fun port -> { port with IsDragging = true }) sym.Ports }),
+                      IsHighlighted = true
+                      Ports =
+                          sym.Ports
+                          |> List.map (fun port -> { port with IsDragging = true }) }
+            else
+                sym),
         Cmd.none
-
-    | Dragging (rank, pagePos) ->
+    | Dragging (sIds, pagePos) ->
         model
         |> List.map (fun sym ->
-            if rank <> sym.Id then
-                sym
-            else
+            if List.contains sym.Id sIds then
                 let diff = posDiff pagePos sym.LastDragPos
+                let inputPort = List.head sym.Ports
+                let outputPort = List.last sym.Ports
 
                 { sym with
                       Pos = posAdd sym.Pos diff
-                      LastDragPos = pagePos
-                      Ports = List.map (fun port -> { port with Pos = posAdd port.Pos diff }) sym.Ports }),
+                      IsTransparent = true
+                      BoundingBox =
+                          { P1 = posAdd sym.BoundingBox.P1 diff
+                            P2 = posAdd sym.BoundingBox.P2 diff }
+                      Ports =
+                          [ { inputPort with
+                                  Pos = posAdd inputPort.Pos diff
+                                  BoundingBox =
+                                      { P1 = posAdd inputPort.BoundingBox.P1 diff
+                                        P2 = posAdd inputPort.BoundingBox.P2 diff } }
+                            { outputPort with
+                                  Pos = posAdd outputPort.Pos diff
+                                  BoundingBox =
+                                      { P1 = posAdd outputPort.BoundingBox.P1 diff
+                                        P2 = posAdd outputPort.BoundingBox.P2 diff } } ]
+                      LastDragPos = pagePos }
+            else
+                sym),
         Cmd.none
-
-    | EndDragging sId ->
+    | EndDragging sIds ->
         model
         |> List.map (fun sym ->
-            if sId <> sym.Id then
-                sym
-            else
+            if List.contains sym.Id sIds then
                 { sym with
-                      IsDragging = false }),
-                      // Ports = List.map (fun port -> { port with IsDragging = false }) sym.Ports }),
+                      IsShowingPorts = false //check the way this is actually working
+                      ShowingPortsType = None
+                      IsTransparent = false }
+            else
+                sym),
         Cmd.none
-    | MouseMsg _ -> model, Cmd.none // allow unused mouse messags
-    | _ -> failwithf "Not implemented"
+    | ShowPorts (symbolIds, portType) -> // Author: Lukas Baliunas
+        printfn "Show ports"
+
+        model
+        |> List.map (fun sym ->
+            if List.contains sym.Id symbolIds then
+                { sym with
+                      IsShowingPorts = true
+                      ShowingPortsType = portType }
+            else
+                sym),
+        Cmd.none
+    | HidePorts smIds -> // Author: Lukas Baliunas
+        model
+        |> List.map (fun sym -> if List.contains sym.Id smIds then { sym with IsShowingPorts = false } else sym),
+        Cmd.none
+    | MouseMsg _ -> model, Cmd.none // allow unused mouse messages
+    | _ -> model, Cmd.none
 
 //----------------------------View Function for Symbols----------------------------//
 
