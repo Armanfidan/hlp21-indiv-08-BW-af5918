@@ -387,7 +387,7 @@ let tryFindClickedWire (pagePos: XYPos) (model: Model): Wire option =
     model.Wires
     |> List.tryFind (fun wire ->
         let foundBoxes =
-            List.tryFind (fun boundingBox -> boxContainsPoint boundingBox pagePos) wire.BoundingBoxes
+            List.tryFind (fun boundingBox -> boxContainsPoint boundingBox.Box pagePos) wire.BoundingBoxes
 
         foundBoxes <> None)
 
@@ -396,7 +396,7 @@ let tryFindClickedSegment (pagePos: XYPos) (wire: Wire): int option =
     let segmentIndex =
         wire.BoundingBoxes
         |> List.mapi (fun index boundingBox -> (index, boundingBox))
-        |> List.tryFind (fun (_, boundingBox) -> boxContainsPoint boundingBox pagePos)
+        |> List.tryFind (fun (_, boundingBox) -> boxContainsPoint boundingBox.Box pagePos)
 
     match segmentIndex with
     | Some segment -> Some(fst segment + 1)
