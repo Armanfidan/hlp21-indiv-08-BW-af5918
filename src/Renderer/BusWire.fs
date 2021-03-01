@@ -44,9 +44,12 @@ type Msg =
     | Symbol of Symbol.Msg
     | CreateConnection of Port * Port
     | SetColour of HighLightColour
-    | StartDraggingWire of wireId: ConnectionId * pagePos: XYPos
-    | DraggingWire of wireId: ConnectionId * pagePos: XYPos
-    | EndDraggingWire of wireId: ConnectionId
+    | StartDragging of wireId: ConnectionId * pagePos: XYPos
+    | Dragging of wireId: ConnectionId * pagePos: XYPos
+    | EndDragging of wireId: ConnectionId
+    | SelectWires of wireIds: ConnectionId list
+    | DeselectWires of wireIds: ConnectionId list
+    | DeleteWires of wireIds: ConnectionId list
     | MouseMsg of MouseT
 
 /// look up wire in the model
@@ -232,7 +235,7 @@ let singleWireView =
             Hooks.useRef (fun (ev: Types.Event) ->
                 let ev = ev :?> Types.MouseEvent
 
-                DraggingWire(props.Wire.Id, posOf ev.pageX ev.pageY)
+                Dragging(props.Wire.Id, posOf ev.pageX ev.pageY)
                 |> props.Dispatch)
 
         let widthText =
@@ -281,9 +284,9 @@ let singleWireView =
             [
                 OnMouseUp(fun _ ->
                     document.removeEventListener ("mousemove", handleMouseMove.current)
-                    EndDraggingWire props.Wire.Id |> props.Dispatch)
+                    EndDragging props.Wire.Id |> props.Dispatch)
                 OnMouseDown(fun ev ->
-                    StartDraggingWire(props.Wire.Id, posOf ev.pageX ev.pageY)
+                    StartDragging(props.Wire.Id, posOf ev.pageX ev.pageY)
                     |> props.Dispatch
 
                     document.addEventListener ("mousemove", handleMouseMove.current)) ]
@@ -307,7 +310,7 @@ let singleWireView =
                         widthText
                     ] 
              ]
-             // @ boxes // Uncomment to display bounding boxes, for debugging purposes
+             @ boxes // Uncomment to display bounding boxes, for debugging purposes
             )
             
             )
@@ -343,7 +346,7 @@ let view (model: Model) (dispatch: Msg -> unit) =
             singleWireView props)
 
     let symbols =
-        Symbol.view model.Symbols (fun sMsg -> dispatch (UpdateSymbol sMsg))
+        Symbol.view model.Symbols (fun sMsg -> dispatch (Symbol sMsg))
 
     g [] [ (g [] wires); symbols ]
 
@@ -394,7 +397,7 @@ let init n () =
     |> (fun wires ->
         { Wires = wires
           Symbols = symbols
-          Colour = Red },
+          Colour = Blue },
         Cmd.none)
 
 /// Assuming that boundingBox.P1 is always top left and boundingBox.P2 is always bottom right.
@@ -446,7 +449,7 @@ let segmentOrientation (corners: XYPos list) (index: int): SegmentOrientation =
 
 let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
     match msg with
-    | UpdateSymbol sMsg ->
+    | Symbol sMsg ->
         let sm, sCmd = Symbol.update sMsg model.Symbols
         { model with Symbols = sm }, Cmd.map UpdateSymbol sCmd
     | CreateConnection (source, target) ->
@@ -454,7 +457,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
               Wires = (createWire source target) :: model.Wires },
         Cmd.none
     | SetColour c -> { model with Colour = c }, Cmd.none
-    | StartDraggingWire (wireId, pagePos) ->
+    | StartDragging (wireId, pagePos) ->
         { model with
             Wires =
                 model.Wires
@@ -512,7 +515,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                             Ports = List.map (fun port -> { port with IsDragging = false }) symbol.Ports }) },
         Cmd.none
 
-    | DraggingWire (wireId, pagePos) ->
+    | Dragging (wireId, pagePos) ->
         { model with
               Wires =
                   model.Wires
@@ -560,10 +563,10 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                                 LastDragPos = pagePos }) },
         Cmd.none
 
-    | EndDraggingWire wireId ->
+    | EndDragging wireId ->
         { model with
-              Wires =
-                  model.Wires
-                  |> List.map (fun wire -> if wireId <> wire.Id then wire else { wire with IsDragging = false }) },
+            Wires =
+                model.Wires
+                |> List.map (fun wire -> if wireId <> wire.Id then wire else { wire with IsDragging = false }) },
         Cmd.none
     | MouseMsg mMsg -> model, Cmd.ofMsg (UpdateSymbol(Symbol.MouseMsg mMsg))
