@@ -1,5 +1,4 @@
 ﻿module Symbol
-
 open CommonTypes
 open Fable.React
 open Fable.React.Props
@@ -12,25 +11,31 @@ open Helpers
 //-------------------------------Symbol Types-----------------------------//
 //------------------------------------------------------------------------//
 
-type Port = {
-        Id : PortId
-        HostId: ComponentId
-        PortType : PortType
-        Pos: XYPos
-        Width: int
-        IsHighlighted: bool
-        IsDragging: bool
-        ParentHeight: float
-    }
+type Port =
+    { Id: PortId
+      HostId: ComponentId
+      PortType: PortType
+      Pos: XYPos
+      BoundingBox: BoundingBox
+      Width: int
+      IsHighlighted: bool
+      IsDragging: bool
+      ParentHeight: float }
 
 type Symbol =
-    { Pos: XYPos
+    { Id: ComponentId
+      BoundingBox: BoundingBox
+      Ports: Port list
+      Pos: XYPos
       LastDragPos: XYPos
-      IsDragging: bool
-      Id: CommonTypes.ComponentId
-      Width: float
-      Height: float
-      Ports: Port list }
+      IsShowingPorts: bool
+      IsHighlighted: bool
+      IsTransparent: bool
+      NoOfInputPorts: int
+      NoOfOutputPorts: int
+      ComponentType: ComponentType
+      Label: string
+      ShowingPortsType: PortType option }
 
 
 type Model = Symbol list
