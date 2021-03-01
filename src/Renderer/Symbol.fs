@@ -12,6 +12,16 @@ open Helpers
 //-------------------------------Symbol Types-----------------------------//
 //------------------------------------------------------------------------//
 
+type Port = {
+        Id : PortId
+        HostId: ComponentId
+        PortType : PortType
+        Pos: XYPos
+        Width: int
+        IsHighlighted: bool
+        IsDragging: bool
+        ParentHeight: float
+    }
 
 type Symbol =
     { Pos: XYPos
