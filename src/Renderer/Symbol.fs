@@ -192,31 +192,27 @@ let private renderComponent =
                 polygon [ SVGAttr.Points
                               (sprintf
                                   "%0.2f,%0.2f %0.2f,%0.2f %0.2f,%0.2f %0.2f,%0.2f"
-                                   (props.Component.Pos.X)
-                                   (props.Component.Pos.Y
-                                    - (props.Component.Height / 2.))
-                                   (props.Component.Pos.X + props.Component.Height)
-                                   (props.Component.Pos.Y
-                                    - (props.Component.Height / 2.))
-                                   (props.Component.Pos.X + props.Component.Height)
-                                   (props.Component.Pos.Y
-                                    + (props.Component.Height / 2.))
-                                   (props.Component.Pos.X)
-                                   (props.Component.Pos.Y
-                                    + (props.Component.Height / 2.)))
+                                   (props.Component.Pos.X) // Top left
+                                   (props.Component.Pos.Y - (props.Component.Height / 2.))
+                                   (props.Component.Pos.X + props.Component.Width) // Top right
+                                   (props.Component.Pos.Y - (props.Component.Height / 2.))
+                                   (props.Component.Pos.X + props.Component.Width) // Bottom right
+                                   (props.Component.Pos.Y + (props.Component.Height / 2.))
+                                   (props.Component.Pos.X) // Bottom left
+                                   (props.Component.Pos.Y + (props.Component.Height / 2.)))
                           SVGAttr.Fill colour
                           SVGAttr.Stroke colour
                           SVGAttr.StrokeWidth 1 ] []
 
                 circle [ Cx inputPort.Pos.X
                          Cy inputPort.Pos.Y
-                         R inputPort.Width
+                         R 5
                          SVGAttr.Fill "darkgrey"
                          SVGAttr.Stroke "grey"
                          SVGAttr.StrokeWidth 1 ] []
                 circle [ Cx outputPort.Pos.X
                          Cy outputPort.Pos.Y
-                         R outputPort.Width
+                         R 5
                          SVGAttr.Fill "darkgrey"
                          SVGAttr.Stroke "grey"
                          SVGAttr.StrokeWidth 1 ] []
@@ -246,11 +242,10 @@ let view (model: Model) (dispatch: Msg -> unit) =
 //     | Some port -> port
 //     | None -> failwithf "Host does not contain port"
 
-let findPort (model: Model) (portId: ComponentId): Port =
+let findPort (model: Model) (portId: PortId): Port =
     model
     |> List.collect (fun symbol -> symbol.Ports)
-    |> List.filter (fun port -> port.Id = portId)
-    |> List.head
+    |> List.find (fun port -> port.Id = portId)
 
 /// Find a symbol such that its ports list contains a port with id=portId
 
