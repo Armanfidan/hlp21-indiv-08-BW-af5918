@@ -344,30 +344,11 @@ let view (model: Model) (dispatch: Msg -> unit) =
 //     | Some port -> port
 //     | None -> failwithf "Host does not contain port"
 
+let symbolPos (symModel: Model) (sId: ComponentId): XYPos =
+    List.find (fun sym -> sym.Id = sId) symModel
+    |> (fun sym -> sym.Pos)
+
 let findPort (model: Model) (portId: PortId): Port =
     model
     |> List.collect (fun symbol -> symbol.Ports)
     |> List.find (fun port -> port.Id = portId)
-
-/// Find a symbol such that its ports list contains a port with id=portId
-
-
-/// Update the symbol with matching componentId to comp, or add a new symbol based on comp.
-let updateSymbolModelWithComponent (symModel: Model) (comp: CommonTypes.Component) = failwithf "Not Implemented"
-
-/// Return the output Buswire width (in bits) if this can be calculated based on known
-/// input wire widths, for the symbol wId. The types used here are possibly wrong, since
-/// this calculation is based on ports, and the skeleton code does not implement ports or
-/// port ids. If This is done the inputs could be expressed in terms of port Ids.
-let calculateOutputWidth (wId: CommonTypes.ConnectionId)
-                         (outputPortNumber: int)
-                         (inputPortWidths: int option list)
-                         : int option =
-    failwithf "Not implemented"
-
-
-//----------------------interface to Issie-----------------------------//
-let extractComponent (symModel: Model) (sId: CommonTypes.ComponentId): CommonTypes.Component =
-    failwithf "Not implemented"
-
-let extractComponents (symModel: Model): CommonTypes.Component list = failwithf "Not implemented"
