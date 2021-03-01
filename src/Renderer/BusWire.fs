@@ -15,8 +15,6 @@ open Helpers
 //------------------------------BusWire Types-----------------------------//
 //------------------------------------------------------------------------//
 
-type BoundingBox = { P1: XYPos; P2: XYPos }
-
 type WireBoundingBox = { Box: BoundingBox; Prev: XYPos }
 
 // Add bounding boxes to each segment of the wire.
