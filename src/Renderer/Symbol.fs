@@ -1,4 +1,5 @@
 ﻿module Symbol
+
 open CommonTypes
 open Fable.React
 open Fable.React.Props
@@ -68,46 +69,86 @@ let posAdd a b = { X = a.X + b.X; Y = a.Y + b.Y }
 
 let posOf x y = { X = x; Y = y }
 
+let symbol (sModel: Model) (sId: ComponentId): Symbol =
+    sModel |> List.find (fun sm -> sm.Id = sId)
+
+
+// let circleRadius = 20.
+let portRadius = 3.
+
+let largerPortRadius = 6.
 
 /// Symbol creation: a unique Id is given to the symbol, found from uuid.
 /// The parameters of this function must be enough to specify the symbol completely
 /// in its initial form. This is called by the AddSymbol message and need not be exposed.
 /// Set IsDragging (for ports) to true to adjust wire colours
-let createNewSymbol (input: XYPos * float * float * int * int) =
-    let pos, height, width, inputWidth, outputWidth = input
+let createNewSymbol (input: XYPos * float * float): Symbol =
+    let pos, height, width = input
+
+    let inputCirclePos = { pos with X = pos.X - width / 2. }
+    let outputCirclePos = { pos with X = pos.X + width / 2. }
+
+    let inputBoundingBox =
+        { P1 =
+              { X = inputCirclePos.X - portRadius
+                Y = inputCirclePos.Y - portRadius }
+          P2 =
+              { X = inputCirclePos.X + portRadius
+                Y = inputCirclePos.Y + portRadius } }
+
+    let outputBoundingBox =
+        { P1 =
+              { X = outputCirclePos.X - portRadius
+                Y = outputCirclePos.Y - portRadius }
+          P2 =
+              { X = outputCirclePos.X + portRadius
+                Y = outputCirclePos.Y + portRadius } }
+
     let hostId = ComponentId(uuid ())
 
-    { Pos = pos
-      LastDragPos = { X = 0.; Y = 0. } // initial value can always be this
-      IsDragging = false // initial value can always be this
-      Id = hostId // create a unique id for this symbol
-      Width = width
-      Height = height
+    { Id = hostId
+      Pos = pos
+      LastDragPos = { X = 0.; Y = 0. }
+      IsTransparent = false
+      IsHighlighted = false
+      IsShowingPorts = false
+      ShowingPortsType = None
+      NoOfInputPorts = 1 //Default for demo
+      NoOfOutputPorts = 1 //Default for demo
+      ComponentType = Not //Default for demo
+      Label = "" //Default for demo
       Ports =
-          [ // Creates one input and one output port. For demo only.
-            { Id = PortId(uuid ())
+          [ { Id = PortId(uuid ())
               HostId = hostId
               PortType = PortType.Input
-              Pos = pos
-              Width = inputWidth
+              Pos = inputCirclePos
+              BoundingBox = inputBoundingBox
+              Width = 1
               IsHighlighted = false
-              ParentHeight = height
-              IsDragging = true }
+              ParentHeight = 40.
+              IsDragging = false }
             { Id = PortId(uuid ())
               HostId = hostId
               PortType = PortType.Output
-              Pos = { pos with X = pos.X + width }
-              Width = outputWidth
+              Pos = outputCirclePos
+              BoundingBox = outputBoundingBox
+              Width = 1
               IsHighlighted = false
-              ParentHeight = height
-              IsDragging = true } ] }
+              ParentHeight = 40.
+              IsDragging = false } ]
+      BoundingBox =
+          { P1 =
+                { X = pos.X - width / 2.
+                  Y = pos.Y - height / 2. }
+            P2 =
+                { X = pos.X + width / 2.
+                  Y = pos.Y + height / 2. } } }
 
+let createDummySymbol pos = createNewSymbol (pos, 100., 50.)
 
 let init () =
-    [ ({ X = 100.; Y = 100. }, 100., 50., 1, 1)
-      ({ X = 500.; Y = 300. }, 100., 50., 1, 1)
-      ({ X = 200.; Y = 500. }, 150., 50., 1, 1)
-      ({ X = 500.; Y = 600. }, 80., 50., 1, 1) ]
+    [ ({ X = 100.; Y = 100. }, 100., 50.)
+      ({ X = 200.; Y = 200. }, 100., 50.) ]
     |> List.map createNewSymbol,
     Cmd.none
 
@@ -212,62 +253,71 @@ type private RenderComponentProps =
 let private renderComponent =
     FunctionComponent.Of
         ((fun (props: RenderComponentProps) ->
+            let opacity =
+                if props.Component.IsTransparent then 0.5 else 1.
+
             let inputPorts =
                 List.filter (fun port -> port.PortType = PortType.Input) props.Component.Ports
 
             let outputPorts =
                 List.filter (fun port -> port.PortType = PortType.Output) props.Component.Ports
 
+            let inputPortRadius, outputPortRadius =
+                match props.Component.ShowingPortsType with
+                | Some PortType.Input -> largerPortRadius, portRadius
+                | Some PortType.Output -> portRadius, largerPortRadius
+                | None -> portRadius, portRadius
+
             // Dummy component has one input and one output
             let inputPort = inputPorts.Head
             let outputPort = outputPorts.Head
 
-            let handleMouseMove =
-                Hooks.useRef (fun (ev: Types.Event) ->
-                    let ev = ev :?> Types.MouseEvent
-                    // x,y coordinates here do not compensate for transform in Sheet
-                    // and are wrong unless zoom=1.0 MouseMsg coordinates are correctly compensated.
-                    Dragging(props.Component.Id, posOf ev.pageX ev.pageY)
-                    |> props.Dispatch)
-
             let colour =
-                if props.Component.IsDragging then "lightblue" else "grey"
+                if props.Component.IsHighlighted then "lightblue" else "grey"
 
-            g [ OnMouseUp(fun _ ->
-                    document.removeEventListener ("mousemove", handleMouseMove.current)
-                    EndDragging props.Component.Id |> props.Dispatch)
-                OnMouseDown(fun ev ->
-                    StartDragging(props.Component.Id, posOf ev.pageX ev.pageY)
-                    |> props.Dispatch
+            let topLeft = props.Component.BoundingBox.P1
 
-                    document.addEventListener ("mousemove", handleMouseMove.current)) ] [
+            let topRight =
+                { props.Component.BoundingBox.P1 with
+                      X = props.Component.BoundingBox.P2.X }
+
+            let bottomRight = props.Component.BoundingBox.P2
+
+            let BottomLeft =
+                { props.Component.BoundingBox.P2 with
+                      X = props.Component.BoundingBox.P1.X }
+
+            g [] [
                 polygon [ SVGAttr.Points
-                              (sprintf
-                                  "%0.2f,%0.2f %0.2f,%0.2f %0.2f,%0.2f %0.2f,%0.2f"
-                                   (props.Component.Pos.X) // Top left
-                                   (props.Component.Pos.Y - (props.Component.Height / 2.))
-                                   (props.Component.Pos.X + props.Component.Width) // Top right
-                                   (props.Component.Pos.Y - (props.Component.Height / 2.))
-                                   (props.Component.Pos.X + props.Component.Width) // Bottom right
-                                   (props.Component.Pos.Y + (props.Component.Height / 2.))
-                                   (props.Component.Pos.X) // Bottom left
-                                   (props.Component.Pos.Y + (props.Component.Height / 2.)))
+                          <| sprintf
+                              "%0.2f,%0.2f %0.2f,%0.2f %0.2f,%0.2f %0.2f,%0.2f"
+                                 topLeft.X
+                                 topLeft.Y
+                                 topRight.X
+                                 topRight.Y
+                                 bottomRight.X
+                                 bottomRight.Y
+                                 BottomLeft.X
+                                 BottomLeft.Y
                           SVGAttr.Fill colour
                           SVGAttr.Stroke colour
+                          SVGAttr.Opacity opacity
                           SVGAttr.StrokeWidth 1 ] []
 
-                circle [ Cx inputPort.Pos.X
-                         Cy inputPort.Pos.Y
-                         R 5
-                         SVGAttr.Fill "darkgrey"
-                         SVGAttr.Stroke "grey"
-                         SVGAttr.StrokeWidth 1 ] []
-                circle [ Cx outputPort.Pos.X
-                         Cy outputPort.Pos.Y
-                         R 5
-                         SVGAttr.Fill "darkgrey"
-                         SVGAttr.Stroke "grey"
-                         SVGAttr.StrokeWidth 1 ] []
+                if props.Component.IsShowingPorts then
+                    circle [ Cx inputPort.Pos.X
+                             Cy inputPort.Pos.Y
+                             R inputPortRadius
+                             SVGAttr.Fill "darkgrey"
+                             SVGAttr.Stroke "grey"
+                             SVGAttr.StrokeWidth 1 ] []
+
+                    circle [ Cx outputPort.Pos.X
+                             Cy outputPort.Pos.Y
+                             R outputPortRadius
+                             SVGAttr.Fill "darkgrey"
+                             SVGAttr.Stroke "grey"
+                             SVGAttr.StrokeWidth 1 ] []
             ]),
          "Component",
          equalsButFunctions)
