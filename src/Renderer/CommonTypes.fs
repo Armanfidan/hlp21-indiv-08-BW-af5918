@@ -28,10 +28,6 @@ module CommonTypes
         HostId: ComponentId
         PortType : PortType
         Pos: XYPos
-        Width: int
-        IsHighlighted: bool
-        IsDragging: bool
-        ParentHeight: float
     }
 
     /// Name identified the LoadedComponent used.
@@ -130,6 +126,9 @@ module CommonTypes
 
     
     /// SHA hash unique to a connection - common between JS and F#
+
+    [<Erase>]
+    type PortId     = | PortId of string
 
     [<Erase>]
     type ConnectionId     = | ConnectionId of string
