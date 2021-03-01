@@ -48,6 +48,7 @@ type Msg =
     | SelectWires of wireIds: ConnectionId list
     | DeselectWires of wireIds: ConnectionId list
     | DeleteWires of wireIds: ConnectionId list
+    | DeleteSymbols of sIds: ComponentId list
     | MouseMsg of MouseT
 
 /// look up wire in the model
@@ -601,4 +602,8 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                 model.Wires
                 |> List.filter (fun wire -> not <| List.contains wire.Id wireIds) },
         Cmd.none
+    | DeleteSymbols sIds ->
+        printfn "DeleteSymbols in BusWire received"
+        model, Cmd.ofMsg (Symbol (Symbol.DeleteSymbols sIds))
     | MouseMsg mMsg -> model, Cmd.ofMsg (Symbol(Symbol.MouseMsg mMsg))
+    | _ -> model, Cmd.none
