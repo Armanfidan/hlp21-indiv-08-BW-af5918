@@ -451,7 +451,23 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
     match msg with
     | Symbol sMsg ->
         let sm, sCmd = Symbol.update sMsg model.Symbols
-        { model with Symbols = sm }, Cmd.map UpdateSymbol sCmd
+        
+        { model with
+            Symbols = sm
+            Wires =
+                model.Wires
+                |> List.map (fun wire ->
+                    (let corners =
+                        let source = findPort model.Symbols wire.SourcePort
+                        let target = findPort model.Symbols wire.TargetPort
+                        
+                        if source.IsDragging || target.IsDragging
+                        then findCorners source.Pos target.Pos source.ParentHeight target.ParentHeight
+                        else wire.Corners
+                     { wire with
+                           Corners = corners
+                           BoundingBoxes = createBoundingBoxes wire.Corners  }))
+                 }, Cmd.map Symbol sCmd
     | CreateConnection (source, target) ->
         { model with
               Wires = (createWire source target) :: model.Wires },
