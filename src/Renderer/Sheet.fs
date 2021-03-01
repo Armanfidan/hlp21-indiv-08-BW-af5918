@@ -1,31 +1,54 @@
 ﻿module Sheet
 
-open BusWire
+open CommonTypes
+open Electron
 open Fable.React
 open Fable.React.Props
 open Browser
 open Elmish
 open Elmish.React
-
+open BusWire
 open Helpers
 
-type Model = { Wire: BusWire.Model }
+type SheetElement =
+    | SymbolElement of Symbol.Symbol
+    | PortElement of Symbol.Port
+    | ConnectionElement of BusWire.Wire
+    | CanvasElement
+
+type DragType =
+    | Symbol of ComponentId list
+    | Connection of srcPort: Symbol.Port * srcPos: XYPos * lastDragPos: XYPos
+    | Wire of ConnectionId
+    | Canvas of srcPos: XYPos * lastDragPos: XYPos
+
+type Model = {
+    Wire: BusWire.Model
+    DragType: DragType option
+    SelectedSymbolIds: ComponentId list
+    SelectedConnectionIds: ConnectionId list
+    IsShiftPressed: bool
+}
 
 type KeyboardMsg =
-    | CtrlS
-    | AltC
-    | AltV
-    | AltZ
-    | AltShiftZ
-    | DEL
+    | CtrlS | AltC | AltV | AltZ | AltShiftZ | DEL | Shift of KeyOp
 
 type Msg =
     | Wire of BusWire.Msg
     | KeyPress of KeyboardMsg
+    | MouseMsg of MouseT
+    
+/// Helper for better readability, when sending messages from Sheet to Symbol 
+let getSymbolMsg (msg:Symbol.Msg) = 
+    Cmd.ofMsg <| Wire (BusWire.Symbol msg)
+    
+/// Helper for better readability, when sending messages from Sheet to BusWire 
+let getWireMsg (msg:BusWire.Msg) =
+    Cmd.ofMsg <| Wire msg
 
 /// Determines top-level zoom, > 1 => magnify.
 /// This should be moved into the model as state
-let zoom = 1.0
+let zoom = 2.0
 
 /// This function zooms an SVG canvas by transforming its content and altering its size.
 /// Currently the zoom expands based on top left corner. Better would be to collect dimensions
