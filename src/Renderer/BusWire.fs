@@ -225,18 +225,8 @@ type WireRenderProps =
 
 let singleWireView =
     FunctionComponent.Of(fun (props: WireRenderProps) ->
-        let corners =
-            if props.Source.IsDragging || props.Target.IsDragging
-            then findCorners props.Source.Pos props.Target.Pos props.Source.ParentHeight props.Target.ParentHeight
-            else props.Wire.Corners
-
-        let handleMouseMove =
-            Hooks.useRef (fun (ev: Types.Event) ->
-                let ev = ev :?> Types.MouseEvent
-
-                Dragging(props.Wire.Id, posOf ev.pageX ev.pageY)
-                |> props.Dispatch)
-
+        let corners = props.Wire.Corners
+        
         let widthText =
             if props.WireWidth = 0 then str "Error: widths do not match" else str <| sprintf "%d" props.WireWidth
 
@@ -280,15 +270,7 @@ let singleWireView =
         
         /// We use all above functions to construct all line and curve segments.
         g
-            [
-                OnMouseUp(fun _ ->
-                    document.removeEventListener ("mousemove", handleMouseMove.current)
-                    EndDragging props.Wire.Id |> props.Dispatch)
-                OnMouseDown(fun ev ->
-                    StartDragging(props.Wire.Id, posOf ev.pageX ev.pageY)
-                    |> props.Dispatch
-
-                    document.addEventListener ("mousemove", handleMouseMove.current)) ]
+            []
             ([
                 polyline [
                     SVGAttr.Points drawCorners
