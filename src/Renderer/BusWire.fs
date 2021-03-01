@@ -22,8 +22,8 @@ type WireBoundingBox = { Box: BoundingBox; Prev: XYPos }
 // Add bounding boxes to each segment of the wire.
 type Wire =
     { Id: ConnectionId
-      SourcePort: ComponentId
-      TargetPort: ComponentId
+      SourcePort: PortId
+      TargetPort: PortId
       IsError: bool
       Width: int
       IsDragging: bool
@@ -41,7 +41,7 @@ type Model =
 //----------------------------Message Type-----------------------------------//
 
 type Msg =
-    | UpdateSymbol of Symbol.Msg
+    | Symbol of Symbol.Msg
     | CreateConnection of Port * Port
     | SetColour of HighLightColour
     | StartDraggingWire of wireId: ConnectionId * pagePos: XYPos
@@ -57,7 +57,7 @@ let wire (model: Model) (wireId: ConnectionId): Wire =
 
 /// This returns the first wire that the port is connected to, but it won't work if a port is connected to
 /// multiple wires. I will fix/update this later.
-let wireFromPort (model: Model) (portId: ComponentId): Wire =
+let wireFromPort (model: Model) (portId: PortId): Wire =
     model.Wires
     |> List.filter (fun wire ->
         wire.SourcePort = portId
@@ -223,8 +223,6 @@ type WireRenderProps =
 
 let singleWireView =
     FunctionComponent.Of(fun (props: WireRenderProps) ->
-        // This should be the wire with changing corners
-
         let corners =
             if props.Source.IsDragging || props.Target.IsDragging
             then findCorners props.Source.Pos props.Target.Pos props.Source.ParentHeight props.Target.ParentHeight
