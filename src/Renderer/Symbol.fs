@@ -43,16 +43,19 @@ type Model = Symbol list
 //----------------------------Message Type-----------------------------------//
 
 type Msg =
+    | ShowPorts of symbols: ComponentId list * PortType option
+    | HidePorts of sIds: ComponentId list
+    | StartDragging of sIds: ComponentId list * pagePos: XYPos
+    | Dragging of sIds: ComponentId list * pagePos: XYPos
+    | EndDragging of sIds: ComponentId list
+    | SelectSymbols of sIds: ComponentId list
+    | DeselectSymbols of sIds: ComponentId list
+    | AddSymbol of cType: ComponentType * pagePos: XYPos * label: string
+    | DeleteSymbols of sIds: ComponentId list
+    | ShowConnectedPorts of srcPortId: PortId * targetPortId: PortId
     /// Mouse info with coords adjusted form top-level zoom
     | MouseMsg of MouseT
-    /// coords not adjusted for top-level zoom
-    | StartDragging of sId: CommonTypes.ComponentId * pagePos: XYPos
-    /// coords not adjusted for top-level zoom
-    | Dragging of sId: CommonTypes.ComponentId * pagePos: XYPos
-    | EndDragging of sId: CommonTypes.ComponentId
-    | AddComponent of XYPos * float * float * int * int
-    | DeleteSymbol of sId: CommonTypes.ComponentId
-    | UpdateSymbolModelWithComponent of CommonTypes.Component
+    | UpdateSymbolModelWithComponent of Component // Issie interface
 
 
 //---------------------------------helper types and functions----------------//
