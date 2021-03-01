@@ -381,17 +381,6 @@ let init n () =
           Colour = Blue },
         Cmd.none)
 
-/// Assuming that boundingBox.P1 is always top left and boundingBox.P2 is always bottom right.
-let boxContainsPoint (boundingBox: WireBoundingBox) (pagePos: XYPos): bool =
-    let p1 = boundingBox.Box.P1
-    let p2 = boundingBox.Box.P2
-
-    let xCondition = pagePos.X > p1.X && pagePos.X < p2.X
-    let yCondition = pagePos.Y > p1.Y && pagePos.Y < p2.Y
-    // if xCondition && yCondition then
-    // printf "%A contains the point %A." boundingBox pagePos
-    xCondition && yCondition
-
 /// Given a model and a position on the page (mouse position), returns the first wire that the mouse is on,
 /// along with the index of the segment of that wire that the mouse is on.
 let tryFindClickedWire (pagePos: XYPos) (model: Model): Wire option =

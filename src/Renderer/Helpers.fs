@@ -40,6 +40,36 @@ let uuid (): string = import "v4" "uuid"
 //                 | None -> None
 //     | None -> None
 
+/// Assuming that boundingBox.P1 is always top left and boundingBox.P2 is always bottom right.
+let boxContainsPoint (boundingBox: BoundingBox) (pagePos: XYPos): bool =
+    let p1 = boundingBox.P1
+    let p2 = boundingBox.P2
+
+    let xCondition = pagePos.X > p1.X && pagePos.X < p2.X
+    let yCondition = pagePos.Y > p1.Y && pagePos.Y < p2.Y
+    // if xCondition && yCondition then
+    // printf "%A contains the point %A." boundingBox pagePos
+    xCondition && yCondition
+    
+let containsBox (innerBox: BoundingBox) (outerBox: BoundingBox) : bool =
+    boxContainsPoint outerBox innerBox.P1 && boxContainsPoint outerBox innerBox.P2
+
+/// Calculate distance from centre of box for now, not from closest point
+let distanceFromPoint (box: BoundingBox) (pagePos: XYPos) : float =
+    if boxContainsPoint box pagePos then 0.
+    else
+        let closestX =
+            if pagePos.X > box.P2.X then box.P2.X
+            elif pagePos.X < box.P1.X then box.P1.X
+            else pagePos.X
+        let closestY =
+            if pagePos.Y > box.P2.Y then box.P2.Y
+            elif pagePos.Y < box.P1.Y then box.P1.Y
+            else pagePos.Y
+            
+        let x = Math.Abs (closestX - pagePos.X)
+        let y = Math.Abs (closestY - pagePos.Y)
+        Math.Sqrt <| (x ** 2.) + (y ** 2.)
 
 //-----------------Code to record and print execution time statistics-------//
 
