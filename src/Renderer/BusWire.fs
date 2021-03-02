@@ -487,6 +487,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                         IsDragging = true
                         Corners = corners
                         DraggedCornerIndex = i
+                        IsHighlighted = true
                         BoundingBoxes = boundingBoxes }
                 | None ->
                     { wire with
