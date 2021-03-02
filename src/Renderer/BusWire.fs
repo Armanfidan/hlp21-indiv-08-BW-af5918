@@ -3,7 +3,6 @@
 open System
 open CommonTypes
 open Symbol
-open Browser
 open Fable.React
 open Fable.React.Props
 open Elmish
@@ -40,7 +39,7 @@ type Model =
 
 type Msg =
     | Symbol of Symbol.Msg
-    | CreateConnection of Port * Port
+    | CreateConnection of PortId * PortId
     | SetColour of HighLightColour
     | StartDragging of wireId: ConnectionId * pagePos: XYPos
     | Dragging of wireId: ConnectionId * pagePos: XYPos
@@ -52,19 +51,34 @@ type Msg =
     | MouseMsg of MouseT
 
 /// look up wire in the model
-let wire (model: Model) (wireId: ConnectionId): Wire =
+let wire (model: Model) (wireId: ConnectionId) : Wire =
     model.Wires
     |> List.filter (fun wire -> wire.Id = wireId)
     |> List.head
 
 /// This returns the first wire that the port is connected to, but it won't work if a port is connected to
 /// multiple wires. I will fix/update this later.
-let wireFromPort (model: Model) (portId: PortId): Wire =
+let wireFromPort (model: Model) (portId: PortId) : Wire =
     model.Wires
     |> List.filter (fun wire ->
         wire.SourcePort = portId
         || wire.TargetPort = portId)
     |> List.head
+
+/// Returns the specified port, along with its parent symbol's bounding box for wire routing purposes.
+let findPortData (symbols: Symbol.Model) (portId: PortId) : (Port * BoundingBox) option =
+    symbols
+    |> List.tryFind (fun symbol ->
+        symbol.Ports
+        |> List.map (fun port -> port.Id)
+        |> List.contains portId)
+    |> Option.bind (fun symbol ->
+        Some
+            (symbol.Ports
+            |> List.map (fun port -> port.Id, port)
+            |> List.find (fun (id, _) -> id = portId)
+            |> snd
+            , symbol.BoundingBox))
 
 /// Automatically finds corners given source and target port positions and symbol heights
 let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
@@ -291,7 +305,7 @@ let singleWireView =
                         widthText
                     ] 
              ]
-             @ boxes // Uncomment to display bounding boxes, for debugging purposes
+             // @ boxes // Uncomment to display bounding boxes, for debugging purposes
             )
             
             )
@@ -331,12 +345,13 @@ let view (model: Model) (dispatch: Msg -> unit) =
 
     g [] [ (g [] wires); symbols ]
 
-
-
-
-let createWire (sourcePort: Port) (targetPort: Port) : Wire =
-    let corners =
-        findCorners sourcePort.Pos targetPort.Pos sourcePort.ParentHeight targetPort.ParentHeight
+let createWire (sourcePort: PortId) (targetPort: PortId) (symbols: Symbol.Model) : Wire =
+    let sourcePort, sBox, targetPort, tBox =
+        match findPortData symbols sourcePort, findPortData symbols targetPort with
+        | Some (sp, sb), Some (tp, tb) -> sp, sb, tp, tb
+        | _ -> failwithf "Ports not found"
+        
+    let corners = findCorners sourcePort targetPort sBox tBox
 
     { Id = ConnectionId(uuid ())
       SourcePort = sourcePort.Id
@@ -372,7 +387,7 @@ let init n () =
         let target =
             List.find (fun port -> port.PortType = PortType.Input) s2.Ports
 
-        createWire source target
+        createWire source.Id target.Id symbols
 
     List.map (fun i -> makeRandomWire ()) [ 1 .. n ]
     |> (fun wires ->
