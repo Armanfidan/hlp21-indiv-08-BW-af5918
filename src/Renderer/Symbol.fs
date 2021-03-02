@@ -18,7 +18,7 @@ type Port =
       BoundingBox: BoundingBox
       Width: int
       IsHighlighted: bool
-      PositionModified: bool }
+      IsPositionModified: bool }
 type Symbol =
     { Id: ComponentId
       BoundingBox: BoundingBox
@@ -120,14 +120,14 @@ let createNewSymbol (input: XYPos * float * float): Symbol =
               BoundingBox = inputBoundingBox
               Width = 1
               IsHighlighted = false
-              PositionModified = false }
+              IsPositionModified = false }
             { Id = PortId(uuid ())
               PortType = PortType.Output
               Pos = outputCirclePos
               BoundingBox = outputBoundingBox
               Width = 1
               IsHighlighted = false
-              PositionModified = false } ]
+              IsPositionModified = false } ]
       BoundingBox =
           { P1 =
                 { X = pos.X - width / 2.
@@ -169,7 +169,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<'a> =
                       IsHighlighted = true
                       Ports =
                           sym.Ports
-                          |> List.map (fun port -> { port with PositionModified = true }) }
+                          |> List.map (fun port -> { port with IsPositionModified = true }) }
             else
                 sym),
         Cmd.none

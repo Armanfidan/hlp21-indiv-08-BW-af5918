@@ -456,7 +456,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                             | Some (sp, sb, _), Some (tp, tb, _) -> sp, sb, tp, tb
                             | _ -> failwithf "Ports not found"
                         
-                        if source.PositionModified || target.PositionModified
+                        if source.IsPositionModified || target.IsPositionModified
                         then findCorners source target sBox tBox
                         else wire.Corners
                      { wire with
@@ -479,7 +479,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                     | _ -> failwithf "Ports not found"
 
                 let corners =
-                  if source.PositionModified || target.PositionModified
+                  if source.IsPositionModified || target.IsPositionModified
                   then findCorners source target sBox tBox
                   else wire.Corners
 
@@ -527,7 +527,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                         symbol
                     else
                         { symbol with
-                            Ports = List.map (fun port -> { port with PositionModified = false }) symbol.Ports }) },
+                            Ports = List.map (fun port -> { port with IsPositionModified = false }) symbol.Ports }) },
         Cmd.none
 
     | Dragging (wireId, pagePos) ->
