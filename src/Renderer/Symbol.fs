@@ -3,7 +3,6 @@
 open CommonTypes
 open Fable.React
 open Fable.React.Props
-open Browser
 open Elmish
 open Elmish.React
 open Helpers
@@ -14,15 +13,12 @@ open Helpers
 
 type Port =
     { Id: PortId
-      HostId: ComponentId
       PortType: PortType
       Pos: XYPos
       BoundingBox: BoundingBox
       Width: int
       IsHighlighted: bool
-      IsDragging: bool
-      ParentHeight: float }
-
+      PositionModified: bool }
 type Symbol =
     { Id: ComponentId
       BoundingBox: BoundingBox
