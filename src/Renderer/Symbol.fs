@@ -115,23 +115,19 @@ let createNewSymbol (input: XYPos * float * float): Symbol =
       Label = "" //Default for demo
       Ports =
           [ { Id = PortId(uuid ())
-              HostId = hostId
               PortType = PortType.Input
               Pos = inputCirclePos
               BoundingBox = inputBoundingBox
               Width = 1
               IsHighlighted = false
-              ParentHeight = 40.
-              IsDragging = false }
+              PositionModified = false }
             { Id = PortId(uuid ())
-              HostId = hostId
               PortType = PortType.Output
               Pos = outputCirclePos
               BoundingBox = outputBoundingBox
               Width = 1
               IsHighlighted = false
-              ParentHeight = 40.
-              IsDragging = false } ]
+              PositionModified = false } ]
       BoundingBox =
           { P1 =
                 { X = pos.X - width / 2.
@@ -173,7 +169,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<'a> =
                       IsHighlighted = true
                       Ports =
                           sym.Ports
-                          |> List.map (fun port -> { port with IsDragging = true }) }
+                          |> List.map (fun port -> { port with PositionModified = true }) }
             else
                 sym),
         Cmd.none
