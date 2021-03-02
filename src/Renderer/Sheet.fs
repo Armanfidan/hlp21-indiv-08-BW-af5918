@@ -422,8 +422,13 @@ let update (msg : Msg) (model : Model): Model*Cmd<Msg> =
                                 Cmd.none
                     //Select symbols inside of rectangle
                     | Some (Canvas (srcPos, lastDragPos)) ->
-                        let toSelectSymbolIds = getSymbolsInsideBoundingBox {P1=srcPos; P2=lastDragPos} symbols
-                        let toSelectConnectionIds = getWiresInsideBoundingBox {P1=srcPos; P2=lastDragPos} wires
+                        let topLeft, bottomRight =
+                            if srcPos.X < lastDragPos.X && srcPos.Y < lastDragPos.Y then srcPos, lastDragPos
+                            elif srcPos.X < lastDragPos.X && srcPos.Y > lastDragPos.Y then { srcPos with Y = lastDragPos.Y }, { lastDragPos with Y = srcPos.Y }
+                            elif srcPos.X > lastDragPos.X && srcPos.Y > lastDragPos.Y then lastDragPos, srcPos
+                            else { srcPos with X = lastDragPos.X }, { lastDragPos with X = srcPos.X }
+                        let toSelectSymbolIds = getSymbolsInsideBoundingBox {P1=topLeft; P2=bottomRight} symbols
+                        let toSelectConnectionIds = getWiresInsideBoundingBox {P1=topLeft; P2=bottomRight} wires
                         
                         let selectSymbolsCmd = getCmdIfNotEmpty (getSymbolMsg <| Symbol.SelectSymbols toSelectSymbolIds) toSelectSymbolIds
                         let selectConnectionsCmd = getCmdIfNotEmpty (getWireMsg <| BusWire.SelectWires toSelectConnectionIds) toSelectConnectionIds
