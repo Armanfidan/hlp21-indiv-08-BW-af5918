@@ -586,7 +586,18 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                 |> List.filter (fun wire -> not <| List.contains wire.Id wireIds) },
         Cmd.none
     | DeleteSymbols sIds ->
-        printfn "DeleteSymbols in BusWire received"
-        model, Cmd.ofMsg (Symbol (Symbol.DeleteSymbols sIds))
+        let ports : PortId list =
+            sIds
+            |> List.map (symbol model.Symbols)
+            |> List.collect (fun symbol -> symbol.Ports)
+            |> List.map (fun port -> port.Id)
+            
+        { model with
+            Wires =
+                model.Wires
+                |> List.filter (fun wire ->
+                    not (List.contains wire.SourcePort ports) &&
+                    not (List.contains wire.TargetPort ports))   
+        }, Cmd.ofMsg (Symbol (Symbol.DeleteSymbols sIds))
     | MouseMsg mMsg -> model, Cmd.ofMsg (Symbol(Symbol.MouseMsg mMsg))
     | _ -> model, Cmd.none
