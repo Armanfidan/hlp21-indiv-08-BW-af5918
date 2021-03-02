@@ -153,7 +153,7 @@ let getOppositePortType (portType:PortType):PortType =
 let tryFindClickedPort (mousePos:XYPos) (symbols:Symbol.Symbol list):Symbol.Port option = 
     symbols
     |> List.collect (fun x -> x.Ports)
-    |> List.tryFindBack (fun port -> boxContainsPoint port.BoundingBox mousePos)
+    |> List.tryFindBack (fun port -> containsPoint port.BoundingBox mousePos)
         
 /// Finds the Port element that is in the location of the mouse, returns None if no such Port was found
 let tryFindClickedPortElement (mousePos:XYPos) (symbols:Symbol.Symbol list):SheetElement option = 
@@ -163,14 +163,14 @@ let tryFindClickedPortElement (mousePos:XYPos) (symbols:Symbol.Symbol list):Shee
 /// Finds the Symbol element that is in the location of the mouse, returns None if no such Symbol was found
 let tryFindClickedSymbolElement (mousePos:XYPos) (symbols:Symbol.Symbol list):SheetElement option =
     symbols
-    |> List.tryFindBack (fun sm -> boxContainsPoint sm.BoundingBox mousePos)
+    |> List.tryFindBack (fun sm -> containsPoint sm.BoundingBox mousePos)
     |> Option.bind (fun sm -> Some <| SymbolElement sm)
     
 /// Finds the Wire element that is in the location of the mouse, returns None if no such Wire was found
 let tryFindClickedWireElement (mousePos:XYPos) (wires: BusWire.Wire list):SheetElement option =
     let isSegmentClicked (wire: BusWire.Wire) =
         wire.BoundingBoxes
-        |> List.exists (fun bb -> boxContainsPoint bb.Box mousePos)
+        |> List.exists (fun bb -> containsPoint bb.Box mousePos)
 
     wires
     |> List.tryFind isSegmentClicked //maybe tryFindBack??

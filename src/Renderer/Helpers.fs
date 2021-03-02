@@ -46,7 +46,7 @@ let uuid (): string = import "v4" "uuid"
 //     | None -> None
 
 /// Assuming that boundingBox.P1 is always top left and boundingBox.P2 is always bottom right.
-let boxContainsPoint (boundingBox: BoundingBox) (pagePos: XYPos): bool =
+let containsPoint (boundingBox: BoundingBox) (pagePos: XYPos): bool =
     let p1 = boundingBox.P1
     let p2 = boundingBox.P2
 
@@ -57,11 +57,11 @@ let boxContainsPoint (boundingBox: BoundingBox) (pagePos: XYPos): bool =
     xCondition && yCondition
     
 let containsBox (innerBox: BoundingBox) (outerBox: BoundingBox) : bool =
-    boxContainsPoint outerBox innerBox.P1 && boxContainsPoint outerBox innerBox.P2
+    containsPoint outerBox innerBox.P1 && containsPoint outerBox innerBox.P2
 
 /// Calculate distance from centre of box for now, not from closest point
 let distanceFromPoint (box: BoundingBox) (pagePos: XYPos) : float =
-    if boxContainsPoint box pagePos then 0.
+    if containsPoint box pagePos then 0.
     else
         let closestX =
             if pagePos.X > box.P2.X then box.P2.X
