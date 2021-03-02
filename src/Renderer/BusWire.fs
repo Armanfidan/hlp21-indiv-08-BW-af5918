@@ -81,24 +81,30 @@ let findPortData (symbols: Symbol.Model) (portId: PortId) : (Port * BoundingBox)
             , symbol.BoundingBox))
 
 /// Automatically finds corners given source and target port positions and symbol heights
-let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
+let findCorners (source: Port) (target: Port) (sourceBox: BoundingBox) (targetBox: BoundingBox) : XYPos list =
+    
+    let srcPos = source.Pos
+    let tgtPos = target.Pos
     // Midpoints
-    let xMid = (targetPort.X + sourcePort.X) / 2.0
+    let xMid = (tgtPos.X + srcPos.X) / 2.0
 
-    let yMid = (targetPort.Y + sourcePort.Y) / 2.0
+    let yMid = (tgtPos.Y + srcPos.Y) / 2.0
 
     // Source coordinates
-    let x1 = sourcePort.X
-    let y1 = sourcePort.Y
+    let x1 = srcPos.X
+    let y1 = srcPos.Y
 
     // Target coordinates
-    let x2 = targetPort.X
-    let y2 = targetPort.Y
-
-    // Heights of parent symbols of the source and target ports, adjusted manually
-    let ha1 = h1 / 2. + 20.
-
-    let ha2 = h2 / 2. + 20.
+    let x2 = tgtPos.X
+    let y2 = tgtPos.Y
+    
+    // Distance above and below the source and target ports
+    let distAbove1 = y1 - sourceBox.P1.Y + 20.
+    let distBelow1 = sourceBox.P2.Y - y1 + 20.
+    
+    let distAbove2 = y2 - targetBox.P1.Y + 20.
+    let distBelow2 = targetBox.P2.Y - y2 + 20.
+    
 
     // Minimum distance to go straight from ports
     let xMin = 20.
@@ -115,44 +121,46 @@ let findCorners (sourcePort: XYPos) (targetPort: XYPos) h1 h2 =
     /// Position of the first corner: If there is enough space then xMid,
     /// otherwise minimum distance from source port
     let xCorner1 =
-        if xPositive
-           && (yDiff < ha1 + ha2 || xDiff >= 2. * xMin) then
+        if xPositive && yPositive && (yDiff < distAbove1 + distBelow2 || xDiff >= 2. * xMin) then
+            xMid
+        elif xPositive && (yDiff < distBelow1 + distAbove2 || xDiff >= 2. * xMin) then
             xMid
         else
             x1 + xMin
     /// Position of the first corner: If there is enough space then xMid,
     /// otherwise minimum distance from target port
     let xCorner2 =
-        if xPositive
-           && (yDiff < ha1 + ha2 || xDiff >= 2. * xMin) then
+        if xPositive && yPositive && (yDiff < distAbove1 + distBelow2 || xDiff >= 2. * xMin) then
+            xMid
+        elif xPositive && (yDiff < distBelow1 + distAbove2 || xDiff >= 2. * xMin) then
             xMid
         else
             x2 - xMin
 
     /// Vertical line segments
     let yCorner1 =
-        if yPositive && (yDiff >= ha1 || not xPositive)
-        then y1 + ha1
-        elif yDiff >= ha1 || not xPositive
-        then y1 - ha1
+        if yPositive && (yDiff >= distAbove1 || not xPositive)
+        then y1 + distAbove1
+        elif yDiff >= distBelow1 || not xPositive
+        then y1 - distBelow1
         elif yPositive
         then y1 + yDiff
         else y1 - yDiff
 
     let yCorner2 =
-        if yPositive && (yDiff >= ha2 || not xPositive)
-        then y2 - ha2
-        elif yDiff >= ha2 || not xPositive
-        then y2 + ha2
+        if yPositive && (yDiff >= distBelow2 || not xPositive)
+        then y2 - distBelow2
+        elif yDiff >= distAbove2 || not xPositive
+        then y2 + distAbove2
         elif yPositive
         then y2 - yDiff
         else y2 + yDiff
 
     let yMidAdaptive1 =
-        if yDiff >= ha1 + ha2 then yMid else yCorner1
+        if (yPositive && yDiff >= distAbove1 + distBelow2) || yDiff >= distBelow1 + distAbove2 then yMid else yCorner1
 
     let yMidAdaptive2 =
-        if yDiff >= ha1 + ha2 then yMid else yCorner2
+        if (yPositive && yDiff >= distAbove1 + distBelow2) || yDiff >= distBelow1 + distAbove2 then yMid else yCorner2
 
     /// Corner list, number of corners may vary depending on shape of wire.
     /// I will need to adjust to this when rendering the wire.
@@ -443,11 +451,13 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                 model.Wires
                 |> List.map (fun wire ->
                     (let corners =
-                        let source = findPort model.Symbols wire.SourcePort
-                        let target = findPort model.Symbols wire.TargetPort
+                        let source, sBox, target, tBox =
+                            match findPortData sm wire.SourcePort, findPortData sm wire.TargetPort with
+                            | Some (sp, sb), Some (tp, tb) -> sp, sb, tp, tb
+                            | _ -> failwithf "Ports not found"
                         
                         if source.IsDragging || target.IsDragging
-                        then findCorners source.Pos target.Pos source.ParentHeight target.ParentHeight
+                        then findCorners source target sBox tBox
                         else wire.Corners
                      { wire with
                            Corners = corners
@@ -455,7 +465,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                  }, Cmd.map Symbol sCmd
     | CreateConnection (source, target) ->
         { model with
-              Wires = (createWire source target) :: model.Wires },
+              Wires = (createWire source target model.Symbols) :: model.Wires },
         Cmd.none
     | SetColour c -> { model with Colour = c }, Cmd.none
     | StartDragging (wireId, pagePos) ->
@@ -463,12 +473,14 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
             Wires =
                 model.Wires
                 |> List.map (fun wire ->
-                let source = findPort model.Symbols wire.SourcePort
-                let target = findPort model.Symbols wire.TargetPort
+                let source, sBox, target, tBox =
+                    match findPortData model.Symbols wire.SourcePort, findPortData model.Symbols wire.TargetPort with
+                    | Some (sp, sb), Some (tp, tb) -> sp, sb, tp, tb
+                    | _ -> failwithf "Ports not found"
 
                 let corners =
                   if source.IsDragging || target.IsDragging
-                  then findCorners source.Pos target.Pos source.ParentHeight target.ParentHeight
+                  then findCorners source target sBox tBox
                   else wire.Corners
 
                 let boundingBoxes = createBoundingBoxes corners

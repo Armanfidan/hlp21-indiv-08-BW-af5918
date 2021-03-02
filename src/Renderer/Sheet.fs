@@ -414,9 +414,9 @@ let update (msg : Msg) (model : Model): Model*Cmd<Msg> =
                             | Some targetPort ->
                                 match srcPort.PortType, targetPort.PortType with
                                     | PortType.Input, PortType.Output -> 
-                                        Cmd.ofMsg (Wire <| BusWire.CreateConnection (targetPort, srcPort))
+                                        Cmd.ofMsg (Wire <| BusWire.CreateConnection (targetPort.Id, srcPort.Id))
                                     | PortType.Output, PortType.Input ->
-                                        Cmd.ofMsg (Wire <| BusWire.CreateConnection (srcPort, targetPort))
+                                        Cmd.ofMsg (Wire <| BusWire.CreateConnection (srcPort.Id, targetPort.Id))
                                     | _ -> Cmd.none
                             | None ->
                                 Cmd.none
