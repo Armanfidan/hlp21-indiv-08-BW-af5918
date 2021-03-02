@@ -34,17 +34,6 @@ type KeyOp = KeyDown | KeyUp
 /// return a v4 (random) universally unique identifier (UUID)
 let uuid (): string = import "v4" "uuid"
 
-// let tryFindClickedSegment (pagePos: XYPos) (wire: Wire option) : int option =
-//     match wire with
-//     | Some w -> let segmentIndex =
-//                     w.BoundingBoxes
-//                     |> List.mapi (fun index boundingBox -> (index, boundingBox))
-//                     |> List.tryFind (fun (_, boundingBox) -> boxContainsPoint boundingBox pagePos)
-//                 match segmentIndex with
-//                 | Some s -> Some <| fst s
-//                 | None -> None
-//     | None -> None
-
 /// Assuming that boundingBox.P1 is always top left and boundingBox.P2 is always bottom right.
 let containsPoint (boundingBox: BoundingBox) (pagePos: XYPos): bool =
     let p1 = boundingBox.P1
