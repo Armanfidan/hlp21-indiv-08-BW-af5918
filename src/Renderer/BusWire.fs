@@ -66,7 +66,7 @@ let wireFromPort (model: Model) (portId: PortId) : Wire =
     |> List.head
 
 /// Returns the specified port, along with its parent symbol's bounding box for wire routing purposes.
-let findPortData (symbols: Symbol.Model) (portId: PortId) : (Port * BoundingBox) option =
+let findPortData (symbols: Symbol.Model) (portId: PortId) : (Port * BoundingBox * ComponentId) option =
     symbols
     |> List.tryFind (fun symbol ->
         symbol.Ports
@@ -78,7 +78,7 @@ let findPortData (symbols: Symbol.Model) (portId: PortId) : (Port * BoundingBox)
             |> List.map (fun port -> port.Id, port)
             |> List.find (fun (id, _) -> id = portId)
             |> snd
-            , symbol.BoundingBox))
+            , symbol.BoundingBox, symbol.Id))
 
 /// Automatically finds corners given source and target port positions and symbol heights
 let findCorners (source: Port) (target: Port) (sourceBox: BoundingBox) (targetBox: BoundingBox) : XYPos list =
@@ -356,7 +356,7 @@ let view (model: Model) (dispatch: Msg -> unit) =
 let createWire (sourcePort: PortId) (targetPort: PortId) (symbols: Symbol.Model) : Wire =
     let sourcePort, sBox, targetPort, tBox =
         match findPortData symbols sourcePort, findPortData symbols targetPort with
-        | Some (sp, sb), Some (tp, tb) -> sp, sb, tp, tb
+        | Some (sp, sb, _), Some (tp, tb, _) -> sp, sb, tp, tb
         | _ -> failwithf "Ports not found"
         
     let corners = findCorners sourcePort targetPort sBox tBox
@@ -453,10 +453,10 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                     (let corners =
                         let source, sBox, target, tBox =
                             match findPortData sm wire.SourcePort, findPortData sm wire.TargetPort with
-                            | Some (sp, sb), Some (tp, tb) -> sp, sb, tp, tb
+                            | Some (sp, sb, _), Some (tp, tb, _) -> sp, sb, tp, tb
                             | _ -> failwithf "Ports not found"
                         
-                        if source.IsDragging || target.IsDragging
+                        if source.PositionModified || target.PositionModified
                         then findCorners source target sBox tBox
                         else wire.Corners
                      { wire with
@@ -475,11 +475,11 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                 |> List.map (fun wire ->
                 let source, sBox, target, tBox =
                     match findPortData model.Symbols wire.SourcePort, findPortData model.Symbols wire.TargetPort with
-                    | Some (sp, sb), Some (tp, tb) -> sp, sb, tp, tb
+                    | Some (sp, sb, _), Some (tp, tb, _) -> sp, sb, tp, tb
                     | _ -> failwithf "Ports not found"
 
                 let corners =
-                  if source.IsDragging || target.IsDragging
+                  if source.PositionModified || target.PositionModified
                   then findCorners source target sBox tBox
                   else wire.Corners
 
@@ -518,14 +518,16 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                         model.Wires
                         |> List.find (fun wire -> wireId = wire.Id)
 
-                    let sp = findPort model.Symbols wire.SourcePort
-                    let tp = findPort model.Symbols wire.TargetPort
+                    let sId, tId =
+                        match findPortData model.Symbols wire.SourcePort, findPortData model.Symbols wire.TargetPort with
+                        | Some (_, _, sid), Some (_, _, tid) -> sid, tid
+                        | _ -> failwithf "Ports not found"
 
-                    if (symbol.Id <> sp.HostId && symbol.Id <> tp.HostId) then
+                    if (symbol.Id <> sId && symbol.Id <> tId) then
                         symbol
                     else
                         { symbol with
-                            Ports = List.map (fun port -> { port with IsDragging = false }) symbol.Ports }) },
+                            Ports = List.map (fun port -> { port with PositionModified = false }) symbol.Ports }) },
         Cmd.none
 
     | Dragging (wireId, pagePos) ->
