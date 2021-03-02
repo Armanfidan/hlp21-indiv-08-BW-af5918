@@ -331,7 +331,7 @@ let view (model: Model) (dispatch: Msg -> unit) =
             
             let wireColour =
                 if wire.IsError then Red.Text()
-                elif wire.IsHighlighted then Yellow.Text()
+                elif wire.IsHighlighted then Orange.Text()
                 else model.Colour.Text()
 
             let width =
@@ -425,6 +425,13 @@ let tryFindClickedSegment (pagePos: XYPos) (wire: Wire): int option =
     | Some segment -> Some(fst segment + 1)
     | None -> None
 
+let connectionExists (model: Model) (source: PortId) (target: PortId) : bool =
+    let exists =
+        model.Wires
+        |> List.tryFind (fun wire -> wire.SourcePort = source && wire.TargetPort = target)
+    match exists with
+    | Some _ -> true
+    | None -> false
 
 /// For wire segments, to choose direction to move
 type SegmentOrientation =
@@ -464,9 +471,11 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
                            BoundingBoxes = createBoundingBoxes wire.Corners  }))
                  }, Cmd.map Symbol sCmd
     | CreateConnection (source, target) ->
-        { model with
-              Wires = (createWire source target model.Symbols) :: model.Wires },
-        Cmd.none
+        if not (connectionExists model source target) then
+            { model with
+                  Wires = (createWire source target model.Symbols) :: model.Wires },
+            Cmd.none
+        else model, Cmd.none
     | SetColour c -> { model with Colour = c }, Cmd.none
     | StartDragging (wireId, pagePos) ->
         { model with
