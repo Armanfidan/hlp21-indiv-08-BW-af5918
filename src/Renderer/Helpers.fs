@@ -34,6 +34,34 @@ type KeyOp = KeyDown | KeyUp
 /// return a v4 (random) universally unique identifier (UUID)
 let uuid (): string = import "v4" "uuid"
 
+
+// /// Given a model and a position on the page (mouse position), returns the first wire that the mouse is on,
+// /// along with the index of the segment of that wire that the mouse is on.
+// let tryFindClickedWire (pagePos: XYPos) (model: Model): Wire option =
+//     model.Wires
+//     |> List.tryFind (fun wire ->
+//         let foundBoxes =
+//             List.tryFind (fun boundingBox -> containsPoint boundingBox.Box pagePos) wire.BoundingBoxes
+//
+//         foundBoxes <> None)
+//
+//
+// /// This returns the first wire that the port is connected to, but it won't work if a port is connected to
+// /// multiple wires. I will fix/update this later.
+// let wireFromPort (model: Model) (portId: PortId) : Wire =
+//     model.Wires
+//     |> List.filter (fun wire ->
+//         wire.SourcePort = portId
+//         || wire.TargetPort = portId)
+//     |> List.head
+//
+//
+// /// look up wire in the model
+// let wire (model: Model) (wireId: ConnectionId) : Wire =
+//     model.Wires
+//     |> List.filter (fun wire -> wire.Id = wireId)
+//     |> List.head
+
 /// Assuming that boundingBox.P1 is always top left and boundingBox.P2 is always bottom right.
 let containsPoint (boundingBox: BoundingBox) (pagePos: XYPos): bool =
     let p1 = boundingBox.P1

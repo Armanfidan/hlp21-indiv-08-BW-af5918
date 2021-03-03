@@ -50,21 +50,6 @@ type Msg =
     | DeleteSymbols of sIds: ComponentId list
     | MouseMsg of MouseT
 
-/// look up wire in the model
-let wire (model: Model) (wireId: ConnectionId) : Wire =
-    model.Wires
-    |> List.filter (fun wire -> wire.Id = wireId)
-    |> List.head
-
-/// This returns the first wire that the port is connected to, but it won't work if a port is connected to
-/// multiple wires. I will fix/update this later.
-let wireFromPort (model: Model) (portId: PortId) : Wire =
-    model.Wires
-    |> List.filter (fun wire ->
-        wire.SourcePort = portId
-        || wire.TargetPort = portId)
-    |> List.head
-
 /// Returns the specified port, along with its parent symbol's bounding box for wire routing purposes.
 let findPortData (symbols: Symbol.Model) (portId: PortId) : (Port * BoundingBox * ComponentId) option =
     symbols
@@ -376,16 +361,6 @@ let init n () =
       Symbols = symbols
       Colour = Blue },
     cmd
-
-/// Given a model and a position on the page (mouse position), returns the first wire that the mouse is on,
-/// along with the index of the segment of that wire that the mouse is on.
-let tryFindClickedWire (pagePos: XYPos) (model: Model): Wire option =
-    model.Wires
-    |> List.tryFind (fun wire ->
-        let foundBoxes =
-            List.tryFind (fun boundingBox -> containsPoint boundingBox.Box pagePos) wire.BoundingBoxes
-
-        foundBoxes <> None)
 
 /// Given a wire, tries to find and return the index of the segment that was clicked. If there are none, returns None.
 let tryFindClickedSegment (pagePos: XYPos) (wire: Wire): int option =
