@@ -235,7 +235,7 @@ let singleWireView =
         let corners = props.Wire.Corners
         
         let widthText =
-            if props.WireWidth = 0 then str "Error: widths do not match" else str <| sprintf "%d" props.WireWidth
+            if props.WireWidth = 0 then str "Different widths" else str <| sprintf "%d" props.WireWidth
 
         // Use to draw bounding boxes for debugging purposes
         let boxes: ReactElement list =
@@ -294,7 +294,8 @@ let singleWireView =
                         SVGAttr.X(corners.[0].X + 6.)
                         SVGAttr.Y(corners.[0].Y - 6.)
                         SVGAttr.Stroke props.WireColour
-                        SVGAttr.Fill props.WireColour ] [
+                        SVGAttr.Fill props.WireColour
+                        SVGAttr.FontSize 10 ] [
                         widthText
                     ] 
              ]
@@ -312,8 +313,8 @@ let view (model: Model) (dispatch: Msg -> unit) =
             let target = findPort model.Symbols wire.TargetPort
             
             let wireColour =
-                if wire.IsError then Red.Text()
-                elif wire.IsHighlighted then Orange.Text()
+                if wire.IsHighlighted then Orange.Text()
+                elif wire.IsError then Red.Text()
                 else model.Colour.Text()
 
             let width =
