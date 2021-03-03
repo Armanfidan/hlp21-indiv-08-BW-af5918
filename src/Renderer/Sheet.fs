@@ -460,7 +460,7 @@ let update (msg : Msg) (model : Model): Model*Cmd<Msg> =
                 
 
 let init() = 
-    let model,cmds = (BusWire.init 400)()
+    let model,cmds = BusWire.init ()
     {        
         Wire = model
         DragType = None
