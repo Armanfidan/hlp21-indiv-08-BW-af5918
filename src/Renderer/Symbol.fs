@@ -78,8 +78,8 @@ let largerPortRadius = 6.
 /// The parameters of this function must be enough to specify the symbol completely
 /// in its initial form. This is called by the AddSymbol message and need not be exposed.
 /// Set IsDragging (for ports) to true to adjust wire colours
-let createNewSymbol (input: XYPos * float * float): Symbol =
-    let pos, height, width = input
+let createNewSymbol (input: XYPos * float * float * int * int): Symbol =
+    let pos, height, width, inputWidth, outputWidth = input
 
     let inputCirclePos = { pos with X = pos.X - width / 2. }
     let outputCirclePos = { pos with X = pos.X + width / 2. }
@@ -118,14 +118,14 @@ let createNewSymbol (input: XYPos * float * float): Symbol =
               PortType = PortType.Input
               Pos = inputCirclePos
               BoundingBox = inputBoundingBox
-              Width = 1
+              Width = inputWidth
               IsHighlighted = false
               IsPositionModified = false }
             { Id = PortId(uuid ())
               PortType = PortType.Output
               Pos = outputCirclePos
               BoundingBox = outputBoundingBox
-              Width = 1
+              Width = outputWidth
               IsHighlighted = false
               IsPositionModified = false } ]
       BoundingBox =
@@ -136,11 +136,13 @@ let createNewSymbol (input: XYPos * float * float): Symbol =
                 { X = pos.X + width / 2.
                   Y = pos.Y + height / 2. } } }
 
-let createDummySymbol pos = createNewSymbol (pos, 100., 50.)
+let createDummySymbol pos = createNewSymbol (pos, 50., 50., 1, 1)
 
 let init () =
-    [ ({ X = 100.; Y = 100. }, 100., 50.)
-      ({ X = 200.; Y = 200. }, 100., 50.) ]
+    [ ({ X = 100.; Y = 100. }, 100., 50., 3, 5)
+      ({ X = 300.; Y = 200. }, 100., 70., 5, 3)
+      ({ X = 80.; Y = 400. }, 120., 60., 1, 3)
+      ({ X = 400.; Y = 500. }, 110., 80., 5, 1) ]
     |> List.map createNewSymbol,
     Cmd.none
 
@@ -304,12 +306,28 @@ let private renderComponent =
                              SVGAttr.Stroke "grey"
                              SVGAttr.StrokeWidth 1 ] []
 
+                    text [
+                            SVGAttr.X (inputPort.Pos.X + 8.)
+                            SVGAttr.Y (inputPort.Pos.Y + 3.)
+                            SVGAttr.Fill "white"
+                            SVGAttr.FontSize 10 ] [
+                        str <| sprintf "%d" inputPort.Width
+                    ]
+                    
                     circle [ Cx outputPort.Pos.X
                              Cy outputPort.Pos.Y
                              R outputPortRadius
                              SVGAttr.Fill "darkgrey"
                              SVGAttr.Stroke "grey"
                              SVGAttr.StrokeWidth 1 ] []
+                    
+                    text [
+                            SVGAttr.X (outputPort.Pos.X - 12.)
+                            SVGAttr.Y (outputPort.Pos.Y + 3.)
+                            SVGAttr.Fill "white"
+                            SVGAttr.FontSize 10 ] [
+                        str <| sprintf "%d" outputPort.Width
+                    ]
             ]),
          "Component",
          equalsButFunctions)
