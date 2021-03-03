@@ -18,7 +18,7 @@ open Helpers
 type SheetElement =
     | SymbolElement of Symbol.Symbol
     | PortElement of Symbol.Port
-    | ConnectionElement of BusWire.Wire
+    | ConnectionElement of Wire
     | CanvasElement
 
 type DragType =
