@@ -191,7 +191,8 @@ let createBoundingBoxes (corners: XYPos list): WireBoundingBox list =
     let diff = { X = 5.; Y = 5. }
     /// Assuming there will always be at least three corners on any given wire. Remove the first and last
     /// corners because we do not want the end segments to be draggable. rest may be an empty list.
-    let (firstCorner :: secondCorner :: rest) = corners.[1..corners.Length - 2]
+    // let (firstCorner :: secondCorner :: rest) = corners.[1..corners.Length - 2]
+    let (firstCorner :: secondCorner :: rest) = corners
     
     // I have to check this condition
     let s1, s2 = chooseCorners firstCorner secondCorner
@@ -371,7 +372,7 @@ let tryFindClickedSegment (pagePos: XYPos) (wire: Wire): int option =
         |> List.tryFind (fun (_, boundingBox) -> containsPoint boundingBox.Box pagePos)
 
     match segmentIndex with
-    | Some segment -> Some(fst segment + 1)
+    | Some segment -> Some (fst segment)
     | None -> None
 
 let connectionExists (model: Model) (source: PortId) (target: PortId) : bool =
@@ -458,13 +459,20 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
 
                 match i with
                 | Some i ->
-                    { wire with
-                        LastDragPos = pagePos
-                        IsDragging = true
-                        Corners = corners
-                        DraggedCornerIndex = i
-                        IsHighlighted = true
-                        BoundingBoxes = boundingBoxes }
+                    if i = 0 || i = corners.Length - 2 then
+                        { wire with
+                            LastDragPos = pagePos
+                            Corners = corners
+                            BoundingBoxes = boundingBoxes
+                            IsHighlighted = true }
+                    else
+                        { wire with
+                            LastDragPos = pagePos
+                            IsDragging = true
+                            Corners = corners
+                            DraggedCornerIndex = i
+                            IsHighlighted = true
+                            BoundingBoxes = boundingBoxes }                        
                 | None ->
                     { wire with
                         LastDragPos = pagePos
