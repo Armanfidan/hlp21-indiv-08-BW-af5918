@@ -317,7 +317,7 @@ let view (model: Model) (dispatch: Msg -> unit) =
             let target = findPort model.Symbols wire.TargetPort
             
             let wireColour =
-                if wire.IsHighlighted then Orange.Text()
+                if wire.IsHighlighted then "lightskyblue"
                 elif wire.IsError then Red.Text()
                 else model.Colour.Text()
 

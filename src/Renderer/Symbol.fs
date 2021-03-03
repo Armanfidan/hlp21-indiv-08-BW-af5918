@@ -265,7 +265,7 @@ let private renderComponent =
             let outputPort = outputPorts.Head
 
             let colour =
-                if props.Component.IsHighlighted then "darkorange" else "grey"
+                if props.Component.IsHighlighted then "lightsteelblue" else "grey"
 
             let topLeft = props.Component.BoundingBox.P1
 
