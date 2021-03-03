@@ -356,7 +356,7 @@ let createWire (sourcePort: PortId) (targetPort: PortId) (symbols: Symbol.Model)
       LastDragPos = { X = 0.; Y = 0. }
       IsHighlighted = false}
 
-let init n () =
+let init () =
     let symbols, cmd = Symbol.init ()
     { Wires = []
       Symbols = symbols
