@@ -43,11 +43,13 @@
             invisibleMenu.label <- "Edit"
             invisibleMenu.visible <- true // false if you want keys but no "Edit" menu
             invisibleMenu.submenu <-
-                [| makeKeyItem "Default" "CmdOrCtrl+S" (fun () -> dispatch KeyboardMsg.CtrlS)
-                   makeKeyItem "Blue" "Alt+C" (fun () -> dispatch KeyboardMsg.AltC)
-                   makeKeyItem "Green" "Alt+V" (fun () -> dispatch KeyboardMsg.AltV)
-                   makeKeyItem "Default"  "delete" (fun () -> dispatch KeyboardMsg.DEL)
-                   makeKeyItem "Red" "Alt+Z" (fun () -> dispatch KeyboardMsg.AltZ)
+                [| makeKeyItem "Default (Blue)" "B" (fun () -> dispatch KeyboardMsg.B)
+                   makeKeyItem "Grey" "A" (fun () -> dispatch KeyboardMsg.A)
+                   makeKeyItem "Green" "G" (fun () -> dispatch KeyboardMsg.G)
+                   makeKeyItem "Red" "R" (fun () -> dispatch KeyboardMsg.R)
+                   menuSeparator
+                   makeKeyItem "Add dummy component" "Alt+Z" (fun () -> dispatch KeyboardMsg.AltZ)
+                   makeKeyItem "Delete selected components"  "delete" (fun () -> dispatch KeyboardMsg.DEL)
                    menuSeparator
                    makeKeyItem "Print Statistics" "Alt+Shift+Z" (fun () -> dispatch KeyboardMsg.AltShiftZ)
                    makeRoleItem MenuItemRole.ForceReload

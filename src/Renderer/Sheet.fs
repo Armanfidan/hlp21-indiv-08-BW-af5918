@@ -36,7 +36,7 @@ type Model = {
 }
 
 type KeyboardMsg =
-    | CtrlS | AltC | AltV | AltZ | AltShiftZ | DEL | Shift of KeyOp
+    | B | A | G | R | AltZ | AltShiftZ | DEL | Shift of KeyOp
 
 type Msg =
     | Wire of BusWire.Msg
@@ -292,6 +292,16 @@ let update (msg : Msg) (model : Model): Model*Cmd<Msg> =
         }
         ,
         Cmd.batch <| deleteSymbolsCmd@deleteConnectionsCmd
+    | KeyPress s -> // all other keys are turned into SetColor commands
+        let c =
+            match s with
+            | B -> Blue
+            | A -> Grey
+            | G -> Green
+            | R -> Red
+            | _ -> Grey
+        printfn "Key:%A" c
+        model, Cmd.ofMsg (Wire <| SetColour c)
     | MouseMsg mouseT ->
         match mouseT.Op with
             | Move ->
