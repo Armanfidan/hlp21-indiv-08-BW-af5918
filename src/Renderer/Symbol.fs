@@ -70,14 +70,11 @@ let symbol (sModel: Model) (sId: ComponentId): Symbol =
 
 
 // let circleRadius = 20.
-let portRadius = 3.
+let portRadius = 4.
 
 let largerPortRadius = 6.
 
-/// Symbol creation: a unique Id is given to the symbol, found from uuid.
-/// The parameters of this function must be enough to specify the symbol completely
-/// in its initial form. This is called by the AddSymbol message and need not be exposed.
-/// Set IsDragging (for ports) to true to adjust wire colours
+/// Create a new symbol based on its specified position, width, height and input and output port widths.
 let createNewSymbol (input: XYPos * float * float * int * int): Symbol =
     let pos, height, width, inputWidth, outputWidth = input
 
@@ -166,6 +163,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<'a> =
         model
         |> List.map (fun sym ->
             if List.contains sym.Id sIds then
+                /// Set IsPositionModified to true when a symbol is dragged, so that its wires are auto-routed again.
                 { sym with
                       LastDragPos = pagePos
                       IsHighlighted = true
@@ -262,12 +260,12 @@ let private renderComponent =
                 | Some PortType.Output -> portRadius, largerPortRadius
                 | None -> portRadius, portRadius
 
-            // Dummy component has one input and one output
+            // Dummy component has one input and one output, so we can just take the first ones
             let inputPort = inputPorts.Head
             let outputPort = outputPorts.Head
 
             let colour =
-                if props.Component.IsHighlighted then "lightblue" else "grey"
+                if props.Component.IsHighlighted then "darkorange" else "grey"
 
             let topLeft = props.Component.BoundingBox.P1
 
