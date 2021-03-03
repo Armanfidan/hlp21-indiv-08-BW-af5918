@@ -371,22 +371,16 @@ let init () =
 
 /// Given a wire, tries to find and return the index of the segment that was clicked. If there are none, returns None.
 let tryFindClickedSegment (pagePos: XYPos) (wire: Wire): int option =
-    let segmentIndex =
-        wire.BoundingBoxes
-        |> List.mapi (fun index boundingBox -> (index, boundingBox))
-        |> List.tryFind (fun (_, boundingBox) -> containsPoint boundingBox.Box pagePos)
+    wire.BoundingBoxes
+    |> List.mapi (fun index boundingBox -> (index, boundingBox))
+    |> List.tryFind (fun (_, boundingBox) -> containsPoint boundingBox.Box pagePos)
+    |> Option.bind (fun segment -> Some <| fst segment)
 
-    match segmentIndex with
-    | Some segment -> Some (fst segment)
-    | None -> None
-
+/// Given two ports, checks whether a wire already exists between them.
 let connectionExists (model: Model) (source: PortId) (target: PortId) : bool =
-    let exists =
-        model.Wires
-        |> List.tryFind (fun wire -> wire.SourcePort = source && wire.TargetPort = target)
-    match exists with
-    | Some _ -> true
-    | None -> false
+    model.Wires
+    |> List.tryFind (fun wire -> wire.SourcePort = source && wire.TargetPort = target)
+    |> Option.isSome
 
 /// For wire segments, to choose direction to move
 type SegmentOrientation =
